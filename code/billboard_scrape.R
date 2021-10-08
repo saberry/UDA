@@ -109,4 +109,9 @@ plan("future::multisession", workers = availableCores() - 1)
 all_hot_songs <- future_map_dfr(unlist(weekly_links), general_scrape_function, 
                                 .progress = TRUE)
 
-save(all_hot_songs, file = "data/billboard_hot_song_links.RData")
+all_goat_songs <- future_map_dfr(goat_links, general_scrape_function)
+
+save(all_hot_songs, all_goat_songs,
+     file = "data/billboard_hot_song_links.RData")
+
+plan("sequential")
