@@ -93,7 +93,8 @@ general_scrape_function <- function(link) {
     return(complete)  
   }, error = function(e) {
     return(data.frame(song = NA, 
-                      artist = NA))
+                      artist = NA, 
+                      link = link))
   })
   return(try_out)  
 }
@@ -111,7 +112,8 @@ all_hot_songs <- future_map_dfr(unlist(weekly_links), general_scrape_function,
 
 all_goat_songs <- future_map_dfr(goat_links, general_scrape_function)
 
+plan("sequential")
+
 save(all_hot_songs, all_goat_songs,
      file = "data/billboard_hot_song_links.RData")
 
-plan("sequential")
