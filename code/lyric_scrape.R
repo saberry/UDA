@@ -41,11 +41,13 @@ lyric_links <- function(song, artist, search) {
   link <- paste0("https://genius.com/api/search/multi?per_page=1&q=", 
                  search)
   
-  link_request <- GET(link)
-  
-  lyric_return <- jsonlite::fromJSON(content(link_request, as = "text"))
-  
   out <- tryCatch({
+    Sys.sleep(runif(1, .1, 1))
+    
+    link_request <- GET(link)
+    
+    lyric_return <- jsonlite::fromJSON(content(link_request, as = "text"))
+    
     lyric_path <- lyric_return$response$sections$hits[[1]]$result$path[1]
     
     lyric_link <- paste0("https://genius.com", lyric_path)[1]
@@ -77,7 +79,13 @@ lyric_links(all_hot_songs$song[1],
             all_hot_songs$artist[1], 
             all_hot_songs$artist_song_search[1])
 
-furrr::future_pmap_dfr(list(all_hot_songs$song, 
-                            all_hot_songs$artist, 
-                            all_hot_songs$artist_song_search), 
-                       lyric_links)
+plan("future::multisession", workers = availableCores() - 1)
+
+all_lyric_links <- furrr::future_pmap_dfr(list(all_hot_songs$song, 
+                                           all_hot_songs$artist, 
+                                           all_hot_songs$artist_song_search), 
+                                      lyric_links, .progress = TRUE)
+
+plan("sequential")
+
+save(all_lyric_links, file = "data/genius_lyric_links.RData")

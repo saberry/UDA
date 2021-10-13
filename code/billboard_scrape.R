@@ -53,7 +53,6 @@ general_scrape_function <- function(link) {
   # into an exception handler:
   try_out <- tryCatch({
     initial_read <- read_html(link)
-    
     # We need to do some checking with what is in the link -- the layout varies
     # across different page types, so we need to be a bit defensive about it.
     
@@ -103,14 +102,15 @@ quick_testing <- purrr::map_df(hot_links, general_scrape_function)
 
 # Things look pretty solid and will clean once everything else is in.
 
-weekly_links <- sapply(hot_links, function(x) paste0(x, saturday_dates), simplify = FALSE)
+weekly_links <- sapply(hot_links, function(x) paste0(x, saturday_dates), 
+                       simplify = FALSE)
 
 plan("future::multisession", workers = availableCores() - 1)
 
 all_hot_songs <- future_map_dfr(unlist(weekly_links), general_scrape_function, 
                                 .progress = TRUE)
 
-all_goat_songs <- future_map_dfr(goat_links, general_scrape_function)
+all_goat_songs <- future_map_dfr(unlist(goat_links), general_scrape_function)
 
 plan("sequential")
 
