@@ -49,7 +49,3 @@ all_lyrics <- future_pmap_dfr(list(all_lyric_links$lyric_link,
 plan("sequential")
 
 save(all_lyrics, file = "data/all_lyrics.RData")
-
-lyricGetter(all_lyric_links$lyric_link[1], 
-            all_lyric_links$searched_artist[1], 
-            all_lyric_links$searched_song[1])
