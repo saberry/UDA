@@ -86,6 +86,11 @@ all_lyric_links <- furrr::future_pmap_dfr(list(all_hot_songs$song,
                                            all_hot_songs$artist_song_search), 
                                       lyric_links, .progress = TRUE)
 
+all_goat_links <- furrr::future_pmap_dfr(list(all_goat_songs$song, 
+                                              all_goat_songs$artist, 
+                                              all_goat_songs$artist_song_search), 
+                                         lyric_links, .progress = TRUE)
+
 plan("sequential")
 
-save(all_lyric_links, file = "data/genius_lyric_links.RData")
+save(all_lyric_links, all_goat_links, file = "data/genius_lyric_links.RData")
