@@ -48,4 +48,9 @@ all_lyrics <- future_pmap_dfr(list(all_lyric_links$lyric_link,
 
 plan("sequential")
 
-save(all_lyrics, file = "data/all_lyrics.RData")
+# Just to keep my ducks in a row (and make sure things worked as expected),
+# I'm going to bind our input data to our lyric data:
+
+all_lyrics_info <- cbind(all_lyrics, all_lyric_links)
+
+save(all_lyrics, all_lyrics_info, file = "data/all_lyrics.RData")
