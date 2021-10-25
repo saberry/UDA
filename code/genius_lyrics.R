@@ -8,12 +8,9 @@ library(rvest)
 
 load("data/genius_lyric_links.RData")
 
-drop_cols <- c("song", "artist")
-
-all_lyric_links <- all_lyric_links[, 
-                                   -which(names(all_lyric_links) %in% drop_cols)]
-
 all_lyric_links <- na.omit(all_lyric_links)
+
+all_lyric_links <- rbind(all_lyric_links, all_goat_links)
 
 lyricGetter <- function(link, artist, song) {
   
