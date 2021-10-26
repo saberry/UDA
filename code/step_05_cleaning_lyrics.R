@@ -23,8 +23,22 @@ lyric_cleaner <- function(lyrics) {
   return(song_lyrics)
 }
 
+artist_cleaner <- function(artist) {
+  clean_artist <- gsub("^\\s|\\s$|\\s{2, }", "", artist)
+  
+  clean_artist <- tolower(clean_artist)
+  
+  return(clean_artist)
+}
+
 all_lyrics_info$lyrics <- lyric_cleaner(all_lyrics_info$lyrics)
+
+all_lyrics_info$searched_artist <- artist_cleaner(all_lyrics_info$searched_artist)
+
+all_lyrics_info$returned_artist <- artist_cleaner(all_lyrics_info$returned_artist)
 
 all_lyrics_info$artist_dist <- stringdist(tolower(all_lyrics_info$searched_artist), 
                                           tolower(all_lyrics_info$returned_artist), 
                                           method = "jw")
+
+filtered_lyrics <- all_lyrics_info[all_lyrics_info$artist_dist < 0.3587302, ]
