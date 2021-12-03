@@ -42,3 +42,7 @@ all_lyrics_info$artist_dist <- stringdist(tolower(all_lyrics_info$searched_artis
                                           method = "jw")
 
 filtered_lyrics <- all_lyrics_info[all_lyrics_info$artist_dist < 0.3587302, ]
+
+filtered_lyrics$genre[which(is.na(filtered_lyrics$genre))] <- 
+  stringr::str_extract(filtered_lyrics$original_link[which(is.na(filtered_lyrics$genre))], 
+                     "adult-pop|pop|country|alternative|rock|hip-hop")
