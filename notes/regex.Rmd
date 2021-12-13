@@ -1,0 +1,324 @@
+---
+title: "Unstructured Data Analytics"
+description: |
+  Regular Expressions
+output:
+  distill::distill_article:
+    toc: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+
+> Some people, when confronted with a problem, think: 
+> 
+> “I know, I'll use regular expressions.” 
+> 
+> Now they have two problems. 
+
+## The 3 Goals of Regular Expressions
+
+## But Why?
+
+## And Where?
+
+## What's The Pattern?
+
+### Pretty easy
+
+```{r, echo = FALSE}
+tibble::tibble(match = c("Mick", "Rick", "candlestick", "quick"), 
+           `do not match` = c("fickleness", "unlicked", "Beck", "quickly")) |> 
+  flextable::flextable()
+```
+
+### Still easy
+
+```{r, echo = FALSE}
+tibble::tibble(match = c("effusive", "fluted", "nihilistic", "suspenseful"), 
+           `do not match` = c("otto", "abba", "trillion", "unfitting")) |> 
+  flextable::flextable()
+```
+
+### Getting harder
+
+```{r, echo = FALSE}
+tibble::tibble(match = c("civic", "level", "rotator", "tenet"), 
+           `do not match` = c("pretest", "sunburn", "springer", "gourmet")) |> 
+  flextable::flextable()
+```
+
+### Are these even words?
+
+```{r, echo = FALSE}
+tibble::tibble(match = c("intervisibility", "pseudoprimitivism", 
+                     "micropoikilitic", "odontonosology"), 
+           `do not match` = c("overregularly", "energetics", 
+                        "observancy", "predisable")) |> 
+  flextable::flextable()
+```
+
+## Great Places To Practice And Learn
+
+<a href="https://www.regular-expressions.info/lookaround.html">Regex Buddy</a>
+
+<a href="https://regexr.com/">regexr</a>
+
+<a href="https://regex101.com/">regex101</a>
+
+<a href="https://regexcrossword.com/">Will destroy your soul</a>
+
+Throw these into regexr's or regex101's editor:
+
+```
+$100
+$100.00
+$GME
+100
+618-549-5326
+Page 42
+ElonMusk
+I like this stock
+Stonks
+Were
+Reee
+Best
+SEC
+```
+
+## Special Symbols
+
+```
+[
+]
+\
+^
+$
+.
+|
+?
+*
++
+(
+)
+```
+
+Can you match everything that starts with a dollar sign?
+
+What about multiple e's only?
+
+
+### Weird Things
+
+```
+\s
+\t
+\n
+```
+
+
+## Ranges and Sets
+
+### Letters
+
+```
+[a-z]
+
+```
+
+### Digits
+
+```
+[1-9]
+```
+
+
+### Punctuation
+
+```
+\.
+\?
+!
+```
+
+
+### Negation
+
+```
+[^aeiou]
+```
+
+### Posix Classes
+
+```
+[[:alpha:]]
+
+[[:digit:]]
+
+[[:lower:]]
+
+[[:punct:]]
+
+[[:alnum:]]
+
+[[:space:]]
+
+[[:word:]]
+
+[[:blank:]]
+```
+
+## Boundaries
+
+```
+\b
+\w
+```
+
+## Groupings and Backreference
+
+```
+([a-z])
+\1
+```
+
+## Look Arounds
+
+```
+Ahead
+a(?!b)
+a(?=b)
+
+Behind
+(?<!a)b
+(?<=a)b
+```
+
+Let's think about what the following might do:
+
+```
+[0-9]+(?!\.)
+[0-9]+(?=\.)
+
+(?<!\b)[A-Z]
+(?<=\$)[0-9]+
+```
+
+Combining groups and look arounds provides silly power:
+
+```
+([?<=\$])([0-9]{1,50})(?=\.)*
+```
+
+## Using Regex
+
+It might surprise you to find which has a more robust set of functions.
+
+### R
+
+base functions:
+
+```{r, eval = FALSE}
+test_strings <- c("Mick", "Rick", "candlestick", "quick", 
+                  "fickleness", "unlicked", "Beck", "quickly")
+
+# Find the pattern
+
+grep(pattern = "", x = test_strings, 
+     perl = TRUE, value = TRUE)
+
+# Which position is the match?
+
+grepl(pattern = "", x = test_strings)
+
+# Replace the match with something else.
+
+gsub(pattern = "", replacement = "", x = test_strings)
+
+# Find and extract a match
+
+regmatches(regexpr())
+```
+
+```{r}
+testStrings <- c("test", "string", "123", "I'm here.")
+
+grep("[[:blank:]]", testStrings, value = TRUE, perl = TRUE)
+```
+
+
+stringr functions
+
+```{r, eval = FALSE}
+library(stringr)
+str_which()
+str_detect()
+str_replace_all()
+str_extract()
+str_squish()
+```
+
+
+Here's an additional chunk of text to explore:
+
+```{r}
+wacky_text <- c("hereIam", "this is a test", 
+          "I repeat, this is a test", 
+          "N0. Rea11y", "anotherProblem")
+```
+
+Here's a potential solutions for breaking text into pieces:
+
+```{r}
+gsub("([a-z])([A-Z])", "\\1 \\2", wacky_text)
+```
+
+
+### Python
+
+```{python}
+import re
+
+p = re.compile('([a-z])([A-Z])')
+
+wacky_text = ["hereIam", "this is a test", 
+        "I repeat, this is a test", 
+        "N0. Rea11y", "anotherProblem"]
+
+matches = list(filter(p.search, wacky_text)) 
+
+# Match is another method, but only works at the beginning of the string
+
+re.sub(pattern = r"([a-z])([A-Z])", # The nonsense r is denoting a raw string.
+       repl = "\\1 \\2", 
+       string = "hereI am")
+
+wacky_text = [re.sub(pattern = "([a-z])([A-Z])", repl = "\\1 \\2", string = wacky_text) 
+  for wacky_text in wacky_text]
+
+re.sub(pattern = "((?<=[a-z]))([A-Z])([a-z])", 
+       repl = "\\1 \\2 \\3", 
+       string = "hereIam")
+
+```
+
+Naturally, pandas has its own set of methods:
+
+count, replace, contains, extract, findall, match, split
+
+```{python, eval = FALSE}
+import pandas as pd
+
+pbpData = pd.read_csv("https://eightthirtyfour.com/nba/pbp/2000-01_pbp.csv")
+
+pbpData['event'] = pbpData.HOMEDESCRIPTION.str.extract(r"([A-Z]{3,})")
+```
+
+## A Puzzle For You
+
+```
+\(*[0-9]{3}\)*-*\s*[0-9]{3}.*[0-9]{4}
+```
