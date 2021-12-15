@@ -317,6 +317,55 @@ pbpData = pd.read_csv("https://eightthirtyfour.com/nba/pbp/2000-01_pbp.csv")
 pbpData['event'] = pbpData.HOMEDESCRIPTION.str.extract(r"([A-Z]{3,})")
 ```
 
+## Exercise
+
+Let's take a crack at solving a problem:
+
+```{r}
+library(rvest)
+library(stringr)
+
+raven <- read_html("https://discoverpoetry.com/poems/edgar-allan-poe/the-raven/") |> 
+  html_elements("p") |> 
+  html_text()
+```
+
+Or if you want to have a go with Python:
+
+```{python}
+from bs4 import BeautifulSoup
+import pandas as pd
+import requests
+
+raven_get = requests.get("https://discoverpoetry.com/poems/edgar-allan-poe/the-raven/")
+
+raven_html = BeautifulSoup(raven_get.content, "html.parser")
+
+raven_text = raven_html.find_all("p")
+
+# Now we can use some lambda action:
+
+raven_map = map(lambda n : raven_text[n].get_text(), range(raven_text.__len__()))
+
+raven_df = pd.DataFrame(list(raven_map))
+
+# You can also just use a standard for loop
+
+for i in range(raven_text.__len__()):
+  raven_text[i] = raven_text[i].get_text()
+  
+raven_df = pd.DataFrame(raven_text, columns = ["text"])
+
+```
+
+<aside>
+You can do some great scraping in Python, but the constant for looping over lists gets annoying.
+</aside>
+
+So, you can see that you have some issues to handle here. Extra spaces, returns/new lines, words strung together, and even punctuation.
+
+Once you get those issues cleaned up, extract out all of the rhyming words. You don't need to get all of them, but get as many as you can.
+
 ## A Puzzle For You
 
 ```
