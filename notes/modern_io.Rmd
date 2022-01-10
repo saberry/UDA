@@ -213,9 +213,7 @@ critters.to_csv('/Users/sethberry/UDA/data/critters_pd.csv')
 critters_pl = pl.read_csv('/Users/sethberry/UDA/data/critters_pd.csv')
 
 critters_pl.select([
-  "age", 
   pl.col('senator_rank').filter(pl.col('person.gender') == 'female'),
-  # pl.col('age').mean().over('senator_rank').alias('rank_age')
   ])
 ```
 
@@ -226,4 +224,3 @@ A few really smart people have decided that R and Python are both useful and you
 
 ## Arrow
 
-## Spark

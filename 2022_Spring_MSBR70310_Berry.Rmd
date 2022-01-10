@@ -1,7 +1,7 @@
 ---
 title: |  
       | Unstructured Data Analytics
-      | ITAO70250
+      | MSBR70310
 header-includes:
    - \usepackage{bbm}
    -  \hypersetup{
@@ -29,8 +29,6 @@ M -- 11:00 to 1:00
 
 W -- 11:00 to 1:00
 
-F -- 10:00 to 12:00
-
 We can also always find mutual times that will work.
 
 # Class Days and Time
@@ -43,7 +41,7 @@ Location -- Stayer B003
 
 # Course Description
 
-Huge amounts of the world’s data is unstructured. Developing competency in how to harness this type of data in order to develop critical insights has significant value for today’s business. This course introduces the fundamental concepts of unstructured data analytics, from data acquisition and preparation to applying supervised and unsupervised machine learning approaches such as text analysis, dimension reduction, object recognition/detection, and recommender systems. In the context of unstructured data analytics, students will also be introduced to the principles of deep neural network and transformers.
+Huge amounts of the world’s data is unstructured (or difficult to process). Developing competency in how to harness this type of data in order to develop critical insights has significant value for today’s business. This course introduces the fundamental concepts of unstructured data analytics, from data acquisition and preparation to applying supervised and unsupervised machine learning approaches such as text analysis, dimension reduction, object recognition/detection, and recommender systems. In the context of unstructured data analytics, students will also be introduced to the principles of deep neural network and transformers.
 
 # Learning Goals
 
@@ -57,7 +55,6 @@ By successfully completing this course, you will fulfill the following objective
 
 - Develop an applied knowledge of how to implement the approaches discussed in the course using R and Python.
   
-
 # Readings
 
 There is no official textbook for this course, but here are some good resources:
@@ -97,10 +94,7 @@ Total -- 400 points
 ```{r, echo = FALSE, message=FALSE, warning=FALSE}
 library(dplyr)
 
-data.frame(Week = c(1, "", 2, "", 3, "",
-                    4, "", 5, "", 6, "", 
-                    7),
-           Date = c("01/11 (T)", 
+data.frame(Date = c("01/11 (T)", 
                     "01/13 (R)", 
                     "01/18 (T)", 
                     "01/20 (R)", 
@@ -127,7 +121,7 @@ data.frame(Week = c(1, "", 2, "", 3, "",
                      "Recommender Systems",
                      "Presentations"),
            Method = c("", "", 
-                      "", "",
+                      "", "static and dynamic",
                       "tf-idf", "word & sentence level sentiment",
                       "PCA", "LDA & Transformers",
                       "Deep Neural Networks", "Convolutional Neural Networks",
@@ -144,7 +138,7 @@ data.frame(Week = c(1, "", 2, "", 3, "",
                         "#3 Assigned \n #2 Due",
                         "",
                         "", 
-                        "", 
+                        "#3 Due", 
                         "")) %>%
   flextable::flextable(cwidth = 1.5)
 ```
