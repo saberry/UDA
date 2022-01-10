@@ -114,7 +114,9 @@ congress_dt[, .(party, person.sortname)] |>
 Again, nothing wild:
 
 ```{r}
-congress_dt[congress_dt$senator_rank == "junior", ]
+congress_dt[congress_dt$senator_rank == "junior", 
+            .(party, person.sortname)] |>
+  head()
 ```
 
 ### mutate
@@ -132,9 +134,17 @@ This is where we have the biggest shift -- the 3rd index position. Any data tabl
 
 ```{r}
 congress_dt[, 
-            .(mean_age = mean(age), .N), 
+            .(mean_age = mean(age), .N, .GRP), 
             by = list(senator_rank, person.gender)]
 ```
+
+```{r}
+congress_dt[, 
+            lapply(.SD, mean), 
+            by = senator_rank, 
+            .SDcols = c("age")]
+```
+
 
 ### Chained indices
 
@@ -144,6 +154,22 @@ congress_dt[congress_dt$senator_rank == "junior",
   .(mean_age = mean(age), .N), 
   by = list(person.gender)
 ]
+```
+
+### Using disk.frame
+
+Nothing beats the speed of data.table, but what if you want something faster?
+
+```{r}
+library(disk.frame)
+
+setup_disk.frame(3)
+
+congress_df <- as.disk.frame(congress_dt[, congress_numbers := NULL])
+
+congress_df[, 
+            .(mean_age = mean(age), .N, .GRP), 
+            by = list(senator_rank, person.gender)]
 ```
 
 
@@ -171,7 +197,6 @@ critters_dd.groupby(['senator_rank']).agg({
   'person.gender':'count'
   }).compute()
 ```
-
 
 ### polars
 
