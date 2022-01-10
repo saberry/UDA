@@ -72,10 +72,15 @@ head(congress_brief)
 ```{python}
 import json # Already comes with python.
 import pandas as pd
+from datetime import date
 
 critters_json = json.load(open('/Users/sethberry/UDA/data/critters.json'))
 
 critters = pd.json_normalize(critters_json, record_path = ['objects'])
+
+critters['age'] = pd.to_datetime(date.today()) - pd.to_datetime(critters['person.birthday'])
+
+critters['age'] = critters['age'].dt.days / 365
 ```
 
 Just like R, pandas will offer different methods for reading json. If you don't have anything too nesty, you can just use `pd.read_json`. 
@@ -199,6 +204,21 @@ critters_dd.groupby(['senator_rank']).agg({
 ```
 
 ### polars
+
+```{python}
+import polars as pl
+
+critters.to_csv('/Users/sethberry/UDA/data/critters_pd.csv')
+
+critters_pl = pl.read_csv('/Users/sethberry/UDA/data/critters_pd.csv')
+
+critters_pl.select([
+  "age", 
+  pl.col('senator_rank').filter(pl.col('person.gender') == 'female'),
+  # pl.col('age').mean().over('senator_rank').alias('rank_age')
+  ])
+```
+
 
 ## Porque no los dos
 
