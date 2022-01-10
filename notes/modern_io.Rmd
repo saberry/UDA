@@ -220,7 +220,24 @@ critters_pl.select([
 
 ## Porque no los dos
 
-A few really smart people have decided that R and Python are both useful and you probably want to pass information between them...queue the Apache Arrow project.
+A few really smart people have decided that R and Python are both useful and you probably want to pass information between them...queue the <a href="https://arrow.apache.org/docs/">Apache Arrow</a> project.
 
-## Arrow
+We are going to see Arrow as a way to read and write data, but spend some time looking at the website -- you can do a lot with Arrow, no matter the language you use.
+
+```{r}
+library(arrow)
+
+write_feather(congress_brief, "/Users/sethberry/UDA/data/congress_feather.feather")
+```
+
+And now read that into Python:
+
+```{python}
+import pyarrow.feather as ft
+import pandas as pd
+
+ft.read_table("/Users/sethberry/UDA/data/congress_feather.feather")
+
+pd.read_feather("/Users/sethberry/UDA/data/congress_feather.feather")
+```
 

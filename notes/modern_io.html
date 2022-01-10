@@ -1477,7 +1477,6 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <li><a href="#r">R</a></li>
 <li><a href="#python">Python</a></li>
 <li><a href="#porque-no-los-dos">Porque no los dos</a></li>
-<li><a href="#arrow">Arrow</a></li>
 </ul>
 </nav>
 </div>
@@ -1901,9 +1900,43 @@ str
 </div>
 </div>
 <h2 id="porque-no-los-dos">Porque no los dos</h2>
-<p>A few really smart people have decided that R and Python are both useful and you probably want to pass information between them…queue the Apache Arrow project.</p>
-<h2 id="arrow">Arrow</h2>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
+<p>A few really smart people have decided that R and Python are both useful and you probably want to pass information between them…queue the <a href="https://arrow.apache.org/docs/">Apache Arrow</a> project.</p>
+<p>We are going to see Arrow as a way to read and write data, but spend some time looking at the website – you can do a lot with Arrow, no matter the language you use.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/apache/arrow/">arrow</a></span><span class="op">)</span>
+
+<span class="fu"><a href="https://arrow.apache.org/docs/r//reference/write_feather.html">write_feather</a></span><span class="op">(</span><span class="va">congress_brief</span>, <span class="st">&quot;/Users/sethberry/UDA/data/congress_feather.feather&quot;</span><span class="op">)</span>
+</code></pre>
+</div>
+</div>
+<p>And now read that into Python:</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode" id="cb14"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pyarrow.feather <span class="im">as</span> ft</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>ft.read_table(<span class="st">&quot;/Users/sethberry/UDA/data/congress_feather.feather&quot;</span>)</span></code></pre></div>
+<pre><code>pyarrow.Table
+id: string
+link: string
+state: string</code></pre>
+<div class="sourceCode" id="cb16"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>pd.read_feather(<span class="st">&quot;/Users/sethberry/UDA/data/congress_feather.feather&quot;</span>)</span></code></pre></div>
+<pre><code>         id                                               link state
+0   C000880  https://www.govtrack.us/congress/members/micha...    ID
+1   G000386  https://www.govtrack.us/congress/members/charl...    IA
+2   L000174  https://www.govtrack.us/congress/members/patri...    VT
+3   M001153  https://www.govtrack.us/congress/members/lisa_...    AK
+4   M001111  https://www.govtrack.us/congress/members/patty...    WA
+..      ...                                                ...   ...
+95  H000273  https://www.govtrack.us/congress/members/john_...    CO
+96  H000601  https://www.govtrack.us/congress/members/bill_...    TN
+97  P000145  https://www.govtrack.us/congress/members/aleja...    CA
+98  O000174  https://www.govtrack.us/congress/members/jon_o...    GA
+99  W000790  https://www.govtrack.us/congress/members/rapha...    GA
+
+[100 rows x 3 columns]</code></pre>
+</div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <!--radix_placeholder_article_footer-->
 <!--/radix_placeholder_article_footer-->
 </div>
