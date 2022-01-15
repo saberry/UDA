@@ -248,7 +248,6 @@ testStrings <- c("test", "string", "123", "I'm here.")
 grep("[[:blank:]]", testStrings, value = TRUE, perl = TRUE)
 ```
 
-
 stringr functions
 
 ```{r, eval = FALSE}
@@ -301,7 +300,6 @@ wacky_text = [re.sub(pattern = "([a-z])([A-Z])", repl = "\\1 \\2", string = wack
 re.sub(pattern = "((?<=[a-z]))([A-Z])([a-z])", 
        repl = "\\1 \\2 \\3", 
        string = "hereIam")
-
 ```
 
 Naturally, pandas has its own set of methods:
@@ -354,7 +352,6 @@ for i in range(raven_text.__len__()):
   raven_text[i] = raven_text[i].get_text()
   
 raven_df = pd.DataFrame(raven_text, columns = ["text"])
-
 ```
 
 <aside>
@@ -366,6 +363,8 @@ So, you can see that you have some issues to handle here. Extra spaces, returns/
 Once you get those issues cleaned up, extract out all of the rhyming words. You don't need to get all of them, but get as many as you can.
 
 ## A Puzzle For You
+
+What's this do?
 
 ```
 \(*[0-9]{3}\)*-*\s*[0-9]{3}.*[0-9]{4}

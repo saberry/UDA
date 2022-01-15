@@ -192,7 +192,7 @@ import dask.dataframe as dd
 import json
 import pandas as pd
 
-critters_json = json.load(open('/Users/sethberry/UDA/data/critters.json'))
+critters_json = json.load(open('/Users/sethberry/UDA/data/critters.json', encoding='utf-8'))
 
 critters = pd.json_normalize(critters_json, record_path = ['objects'])
 
