@@ -239,7 +239,7 @@ base_link <- "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&sy
 
 av_link <- paste(base_link, 
                          av_symbol, "&interval=60min", "&datatype=csv",
-                         "&apikey=", av_k, 
+                         "&apikey=", av_K, 
                          sep = "")
 
 av_request <- GET(av_link)
@@ -443,11 +443,16 @@ while(is.null(pages) == FALSE) {
 Even with this time out, the multi-step approach is something that you should expect to see. It can take this pagination form or it can take finding specific information from one API call to pass along to another API call.
 
 ```{python}
+import numpy
+import time
+
 page = 1
 
 result = pd.DataFrame()
 
 while page != None:
+  
+  time.sleep(numpy.random.uniform(low = .5, high = 1.5))
 
   params = {'page': page, 
     'per_page': 100}
