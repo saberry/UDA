@@ -267,3 +267,24 @@ for i in range(len(students)):
     driver.save_screenshot(file_name)
 ```
 
+
+```{r}
+library(rvest)
+
+tom_read <- read_html("https://www.rottentomatoes.com/m/spider_man_no_way_home")
+
+html_elements(tom_read, "#topSection .scoreboard") %>% 
+  html_attrs()
+
+html_elements(tom_read, "#contentReviews #reviews critic-review-bubble") %>% 
+  html_attr("reviewquote")
+
+music_sesh <- read_html("https://www.imdb.com/find?q=spiderman+no+way+home")
+
+music_sesh %>% 
+  html_elements("a[href *= 'title']")
+
+read_html("https://www.imdb.com/title/tt10872600/?ref_=fn_al_tt_1") %>% 
+  html_elements("")
+```
+
