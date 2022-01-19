@@ -18,13 +18,15 @@ Just keep in mind that our potential goals are very broad: we could be scraping 
 
 ## Broad Rules
 
-1. Only scrape something once
+1. Only scrape something once.
 
-2. Save as needed
+2. Save as needed.
 
-3. Only scrape what you need
+3. Only scrape what you need.
 
-4. ToS are real
+4. ToS are real.
+
+5. What works today, won't work tomorrow.
 
 ## HTML Elements
 
@@ -172,6 +174,20 @@ html_elements(strat_read, "span[itemprop='reviewRating']+.rating-stars") %>%
 
 Those "+" signs are CSS combinators -- specifically, they are adjacent sibling combinators. There are several CSS selectors that you might find handy, with <a href="https://www.w3schools.com/cssref/css_selectors.asp">w3schools</a> and <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors">MDN</a> being excellent resources.
 
+## Intense Frustration
+
+```{r}
+tom_read <- read_html("https://www.rottentomatoes.com/m/spider_man_no_way_home")
+
+html_elements(tom_read, "#topSection .scoreboard") %>% 
+  html_attrs()
+
+html_elements(tom_read, "#contentReviews #reviews critic-review-bubble") %>% 
+  html_attr("reviewquote")
+
+```
+
+
 ## Interactive Sessions
 
 ```{r}
@@ -219,3 +235,35 @@ parsed <- fromJSON(content(reddit, as = "text"))
 
 
 ## Automation
+
+```{python, eval = FALSE}
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver import Firefox
+import urllib.request
+import requests
+from PIL import Image
+from io import StringIO
+
+driver = webdriver.Firefox(executable_path="C:/Users/sberry5/Documents/geckodriver-v0.30.0-win64/geckodriver.exe")
+
+driver.get("http://inside.nd.edu")
+
+driver.get("https://onlinephoto.nd.edu/#!/instructor/index/termcode/202120/course/70310-01/courseid/21AA592BF50D414E5565FFCBF7559978/page/1/view/faces")
+
+students = []
+
+for element in driver.find_elements_by_class_name('face.student'):
+    students.append(element.get_attribute("first-name") + "_" + element.get_attribute("last-name"))
+
+photo_locations = []
+
+for element in driver.find_elements_by_class_name('face-image.get-details'):
+    photo_locations.append(element.get_attribute("src"))
+
+for i in range(len(students)):
+    file_name = "C:/Users/sberry5/Documents/teaching/UDA/data/student_images/" +  students[i] + ".png"
+    driver.get(photo_locations[i])
+    driver.save_screenshot(file_name)
+```
+
