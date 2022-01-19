@@ -1,0 +1,221 @@
+---
+title: "Scraping Data"
+description: |
+  A valuable skillset
+output:
+  distill::distill_article:
+    toc: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+When we are scraping data, our goal isn't necessarily to take what isn't ours; instead, we are just trying to make good use of available data. As with everything, let's start somewhere pretty easy and work our way up from there.
+
+Just keep in mind that our potential goals are very broad: we could be scraping clients/leads, "pure" data, or something along the lines of pure text. 
+
+## Broad Rules
+
+1. Only scrape something once
+
+2. Save as needed
+
+3. Only scrape what you need
+
+4. ToS are real
+
+## HTML Elements
+
+Since we are scraping data, you will need to know some basic HTML elements. 
+
+```{r, echo=FALSE}
+library(magrittr)
+data.frame(element = c("a", "h1-h6", "li", "p", "span", 
+                       "table", "td", "th", "tr")) %>% 
+  knitr::kable()
+```
+
+For a complete list, you can check <a href="https://www.w3schools.com/TAGS/default.ASP">w3schools</a>.
+
+## Tables
+
+The most simple form of all scraping is the html table -- it has always been easy and it will always be easy. You don't need to know much in the way of fancy code, just that you are dealing with an html table:
+
+```{r}
+library(rvest)
+
+library(magrittr)
+
+cpiLink <- "https://www.usinflationcalculator.com/inflation/consumer-price-index-and-annual-percent-changes-from-1913-to-2008/"
+
+cpiTable <- read_html(cpiLink) %>% 
+  html_table(header = TRUE) %>% 
+  `[[`(1) 
+```
+
+We have talked about the extraction method a little bit before, but let's think through the purpose. When we use the html_table function, it gets a list of every table on the page, whether it is 1 or 100 tables. The extraction is great when you know which table you want and it will never change. However, you might run into the case where it does change. 
+
+```{python}
+import pandas as pd
+
+cpiLink = 'https://www.usinflationcalculator.com/inflation/consumer-price-index-and-annual-percent-changes-from-1913-to-2008/'
+
+pd.read_html(cpiLink, match = 'Year', header = 1)
+
+# Otherwise:
+
+# pd.read_html(cpiLink)[0]
+```
+
+Let's see what we might be able to do to program around that.
+
+```{r}
+topFilms <- "https://en.wikipedia.org/wiki/List_of_highest-grossing_films"
+
+topFilmsRead <- read_html(topFilms)
+
+table_number <- topFilmsRead %>% 
+  html_nodes("table") %>% 
+  grepl(">Highest-grossing films<", .) %>% 
+  which(. == TRUE)
+
+topFilmsRead %>% 
+  html_table() %>% 
+  `[[`(table_number)
+```
+
+And here is something very similar:
+
+```{r}
+tax_read <- read_html("https://taxfoundation.org/publications/corporate-tax-rates-around-the-world/")
+
+tables <- tax_read %>% 
+  html_elements("table")
+
+tables[which(grepl("Highest", tables))] %>% 
+  html_table() %>% 
+  `[[`(1)
+```
+
+Often, we find that we aren't extracting information from tables, but from html elements:
+
+```{r}
+page_read <- read_html("https://opencorporates.com/companies/us_de/2053985")
+
+table_names <- page_read %>% 
+  html_elements("#attributes dt") %>% 
+  html_text()
+
+table_data <- page_read %>% 
+  html_elements("#attributes dd") %>% 
+  html_text()
+```
+
+How would you put this together into a data frame?
+
+If you are using Python, you will need to do something like this:
+
+```{python}
+from bs4 import BeautifulSoup
+import requests
+
+corporate_link = requests.get('https://opencorporates.com/companies/us_de/2053985')
+
+table_names = BeautifulSoup(corporate_link.content, 'html.parser') 
+
+corp_names = table_names.select('#attributes dt')
+
+corp_data = table_names.select('#attributes dd')
+
+table_names = []
+
+table_data = []
+
+for i in range(len(corp_names)):
+    table_names.append(corp_names[i].getText())
+
+for i in range(len(corp_names)):
+    table_data.append(corp_data[i].getText())
+
+corp_pd = pd.DataFrame([table_data], columns = table_names)
+```
+
+I hope you like for loops, because you will need them with Beautiful Soup.
+
+## CSS Selectors
+
+Let's see some tricky work now:
+
+```{r}
+product_page <- "https://www.sweetwater.com/store/detail/StratAPERHB--fender-american-performer-stratocaster-honeyburst-with-rosewood-fingerboard/reviews"
+
+strat_read <- read_html(product_page)
+
+titles <- html_elements(strat_read, ".list h3[itemprop *= 'name']") %>% 
+  html_text()
+
+review_text <- html_elements(strat_read, ".list h3[itemprop *= 'name']+div") %>% 
+  html_text()
+
+html_elements(strat_read, ".rating-stars")
+```
+
+And that's a problem! We need to be more specific:
+
+```{r}
+html_elements(strat_read, "span[itemprop='reviewRating']+.rating-stars") %>% 
+  html_attr("data-rated")
+```
+
+
+Those "+" signs are CSS combinators -- specifically, they are adjacent sibling combinators. There are several CSS selectors that you might find handy, with <a href="https://www.w3schools.com/cssref/css_selectors.asp">w3schools</a> and <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors">MDN</a> being excellent resources.
+
+## Interactive Sessions
+
+```{r}
+music_sesh <- session("https://www.allmusic.com/")
+
+html_form(music_sesh)
+
+music_search <- html_form(music_sesh)[[1]]
+
+music_search <- html_form_set(music_search, term = "boards%20of%20canada")
+
+music_response <- html_form_submit(music_search)
+
+next_link <- read_html(music_response) %>% 
+  html_elements("a[href*= 'artist/boards']") %>% 
+  html_attr("href") %>% 
+  `[[`(1) %>% 
+  paste0("https://www.allmusic.com", ., "/discography")
+  
+updated_sesh <- session_jump_to(music_sesh, next_link)
+
+read_html(updated_sesh) %>% 
+  html_table()
+
+read_html(updated_sesh) %>% 
+  html_elements(".average-user-rating") %>% 
+  html_attrs()
+```
+
+
+## Scraping APIs?
+
+```{r}
+library(httr)
+library(jsonlite)
+reddit <-  GET('https://api.pushshift.io/reddit/search/submission/?q=puppy&after=1642472350&before=1642558750&subreddit=&author=&aggs=&metadata=true&frequency=hour&advanced=false&sort=desc&domain=&sort_type=num_comments&size=100',
+               add_headers("Host" = "elastic.pushshift.io",
+                           "Origin" = "https://redditsearch.io",
+                           "Referer" = "https://redditsearch.io/",
+                           "User-Agent" = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:86.0) Gecko/20100101 Firefox/86.0"))
+
+parsed <- fromJSON(content(reddit, as = "text"))
+
+```
+
+
+## Automation

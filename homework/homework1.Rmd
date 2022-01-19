@@ -1,0 +1,63 @@
+---
+title: "Unstructured"
+author: "Homework 1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# The Data
+
+The data is on Canvas in the `data` folder. You will be working with the data in the file called *wweCalls*. Do not unzip it through your computer's GUI; instead, write the code to do it:
+
+In R:
+
+```{r, eval = FALSE}
+unzip(zipfile = "path_to_file", 
+      exdir = "directory_for_files")
+```
+
+Or in Python:
+
+```{python, eval = FALSE}
+import zipfile
+
+with zipfile.ZipFile('path_to_file', 'r') as zipper:
+  zipper.extractall('directory_for_files')
+```
+
+Note that nothing happens in your console when you run these, but the unzipped files will appear where you told them to.
+
+## Step 1
+
+Read all of the *parsed* transcripts into R or Python. You could do them individually, but that is a horrible idea. Instead, use one of the following functions to list files in your directory and read them all in together:
+
+In R:
+
+```{r, eval = FALSE}
+list.files("path_to_folder")
+```
+
+In Python:
+
+```{python}
+import glob
+
+glob.glob('path_to_folder_and_pattern')
+```
+
+No matter the language, you will probably want to look at the documentation for the noted functions.
+
+All of these data frames need to be gathered into one data frame. Use some regular expressions to do any text tidy work that you deem necessary.
+
+## Step 2
+
+Register for a free API key from <a href"https://www.alphavantage.co/documentation/">alphavantage</a>. Using your API key, get the daily time series for the given ticker and explore the 10 trading days around each call's date (i.e., the closing price for 5 days before the call, the closing price for the day of the call, and the closing price for the 5 days after the call). If those dates fall on weekends or holidays, do not worry about them. Using the `seq.Date()` in R function will be helpful for generating those date sequences. If you are doing this in Python, I would suggest using `datetime.timedelta` or `datetime` in conjunction with `pd.date_range`. 
+
+## Step 3
+
+Although it is not everyone's cup of tea, professional wrestling (i.e., sports entertainment) is big business -- television contracts, merchandise, and touring generate a lot of money. The site, wrestlingdata.com, has tons of data you never new existed (or wanted to know). One chunk of data is pay-per-view buy rate -- there are around 300 rates across the 6 tables here: https://www.wrestlingdata.com/index.php?befehl=quoten&art=3&liga=1&show=&sort=1&seite=1
+
+You goal is to scrape all 6 pages of buyrate tables, get them into 1 data frame, and plot the absolute buyrate over the dates. What can you infer about wrestling's popularity over the years?
