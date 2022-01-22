@@ -185,6 +185,10 @@ html_elements(tom_read, "#topSection .scoreboard") %>%
 html_elements(tom_read, "#contentReviews #reviews critic-review-bubble") %>% 
   html_attr("reviewquote")
 
+imdb_read <- read_html("https://www.imdb.com/find?q=spiderman+no+way+home")
+
+imdb_read %>% 
+  html_elements("a[href *= 'title']")
 ```
 
 
@@ -211,10 +215,6 @@ updated_sesh <- session_jump_to(music_sesh, next_link)
 
 read_html(updated_sesh) %>% 
   html_table()
-
-read_html(updated_sesh) %>% 
-  html_elements(".average-user-rating") %>% 
-  html_attrs()
 ```
 
 
@@ -245,7 +245,7 @@ import requests
 from PIL import Image
 from io import StringIO
 
-driver = webdriver.Firefox(executable_path="C:/Users/sberry5/Documents/geckodriver-v0.30.0-win64/geckodriver.exe")
+driver = webdriver.Firefox()
 
 driver.get("http://inside.nd.edu")
 
@@ -262,29 +262,10 @@ for element in driver.find_elements_by_class_name('face-image.get-details'):
     photo_locations.append(element.get_attribute("src"))
 
 for i in range(len(students)):
-    file_name = "C:/Users/sberry5/Documents/teaching/UDA/data/student_images/" +  students[i] + ".png"
+    file_name = "D:/Users/sberry5/Documents/teaching/UDA/data/student_images/" +  students[i] + ".png"
     driver.get(photo_locations[i])
     driver.save_screenshot(file_name)
 ```
 
 
-```{r}
-library(rvest)
-
-tom_read <- read_html("https://www.rottentomatoes.com/m/spider_man_no_way_home")
-
-html_elements(tom_read, "#topSection .scoreboard") %>% 
-  html_attrs()
-
-html_elements(tom_read, "#contentReviews #reviews critic-review-bubble") %>% 
-  html_attr("reviewquote")
-
-music_sesh <- read_html("https://www.imdb.com/find?q=spiderman+no+way+home")
-
-music_sesh %>% 
-  html_elements("a[href *= 'title']")
-
-read_html("https://www.imdb.com/title/tt10872600/?ref_=fn_al_tt_1") %>% 
-  html_elements("")
-```
 
