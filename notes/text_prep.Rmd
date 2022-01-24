@@ -17,7 +17,15 @@ The ability to produce written word is one of the major separators between us an
 
 ## Processing Text
 
-Before we can even begin to dive into analyzing text, we must first process the text. Processing text involves several steps that will be combined in various ways, depending on what we are trying to accomplish.
+Before we can even begin to dive into analyzing text, we must first process the text. Processing text involves several steps that can/will be combined in various ways, depending on what we are trying to accomplish. Most of the text prep can be boiled down to the following steps:
+
+1. Normalize
+
+2. Word and symbol removal
+
+3. Matrix conversion
+
+Depending on your task, you might do all of these steps or none! Not only is every text different, but every analysis is different. Careful consideration needs to be paid when analyzing text!
 
 ### Stemming
 
@@ -33,9 +41,9 @@ love_strings <- c("love", "loving", "loved", "lover")
 tm::stemDocument(love_strings)
 ```
 
-We got exactly what we expected, right? You might have noticed that "chewer" did not get stemmed. Do you have any idea why? Let's think through it together. "Chew", "chewing", and "chewed" are all verbs related to the act of chewinging. "Chewer", on the other hand, is a person who chews -- it is a noun. Martin Porter's stemming <a href="http://cs.indstate.edu/~skatam/paper.pdf">algorithm</a> works incredibly well!
+We got exactly what we expected, right? You might have noticed that "lover" did not get stemmed. Do you have any idea why? Let's think through it together. "love", "loving", and "loved" are all verbs. "lover", on the other hand, is a person who loves -- it is a noun. Martin Porter's stemming <a href="http://cs.indstate.edu/~skatam/paper.pdf">algorithm</a> works incredibly well!
 
-Hopefully, this makes conceptual sense; however, we also need to understand why we need to do it. In a great many text-based methods, we are going to create a matrix that keeps track of every term (i.e., word) in every document -- this is known as a document-term matrix. If we know that "chew", "chewing", and "chewed" all refer to the same thing, we want it just represented once within our document-term matrix.
+Hopefully, this makes conceptual sense; however, we also need to understand why we need to do it. In a great many text-based methods, we are going to create a matrix that keeps track of every term (i.e., word) in every document -- this is known as a document-term matrix. If we know that "love", "loving", and "loved" all refer to the same thing, we want it just represented once within our document-term matrix.
 
 Shall we take a look?
 
@@ -46,7 +54,7 @@ documents <- c("I've loved you three summers now, honey, but I want them all",
               "You're my, my, my, my lover", 
               "Tell me, tell me if you love me or not", 
               "Tryna do what lovers do, ooh", 
-              "I just, I can't, I just can’t be loving you no more")
+              "I just, I can't, I just can't be loving you no more")
 
 documentsCorp <- tm::SimpleCorpus(VectorSource(documents))
 
@@ -81,7 +89,7 @@ Stemming is often sufficient (and most modern stemmers work pretty well on their
 
 Instead, let's see it in action.
 
-If we compare some "chewing" stuff on stemming and lemmatization, we can see what we get:
+If we compare some "love" stuff on stemming and lemmatizing, we can see what we get:
 
 ```{r}
 library(textstem)
@@ -93,7 +101,7 @@ stem_words(love_string)
 lemmatize_words(love_string)
 ```
 
-Absolutely nothing different. Both stemming and lemmatizing will perform the same task. The act of chewing is comprised of a past, present, and future tense, and chew is the lemma; chewer is still seen as something else entirely.
+Absolutely nothing different. Both stemming and lemmatizing will perform the same task. The act of love is comprised of a past, present, and future tense, and chew is the lemma; lover is still seen as something else entirely.
 
 But let's take a look at something different. If we have a string of the most lovely words, what might happen?
 
@@ -116,9 +124,9 @@ We get something that starts to make sense. Now, let's try these on some actual 
 ```{r}
 # This data is in the "data" folder on Sakai!
 
-load("D:/projects/courses/unstructured/data/allLyricsDF.RData")
+load("D:/projects/UDA/data/all_lyrics.RData")
 
-sampleLyrics <- allLyricsDF[40, ]
+sampleLyrics <- all_lyrics_info[5000, ]
 
 sampleLyrics$lyrics
 ```
@@ -126,7 +134,7 @@ sampleLyrics$lyrics
 Of course, we will need to do some cleaning on our text first:
 
 <aside>
-As we work with this lyric stuff, you will need to make sure that you clean it before playing with it. The code that we saw last week should take care of it...maybe!
+As we work with this lyric stuff, you will need to make sure that you clean it before playing with it.
 </aside>
 
 ```{r}
@@ -136,9 +144,10 @@ library(stringr)
 
 cleanLyrics <- sampleLyrics$lyrics %>% 
   str_replace_all(., "\n", " ") %>% 
-  str_replace_all(., "\\[[A-Za-z]+\\s*[0-9]*]", "") %>%
+  str_replace_all(., "(\\[.*?\\])", "") %>%
   str_squish(.) %>% 
-  gsub("([a-z])([A-Z])", "\\1 \\2", .)
+  gsub("([a-z])([A-Z])", "\\1 \\2", .) %>% 
+  tolower()
 ```
 
 We have to try the obligatory stemming:
@@ -160,7 +169,7 @@ microbenchmark::microbenchmark(stem_strings(cleanLyrics),
                                lemmatize_strings(cleanLyrics))
 ```
 
-What is the point here? This song has a little over 400 words in it. Stemming, over 100 runs, took on average 1.3 milliseconds, while lemmatizing took 3.6. We are just talking milliseconds, so this is almost to the point where we would not notice; but, if we did this over an entire corpus, we would definitely notice the time.
+What is the point here? This song has a little over 400 words in it. Stemming, over 100 runs, took on average ~1.1 milliseconds, while lemmatizing took ~3.1. We are just talking milliseconds, so this is almost to the point where we would not notice; but, if we did this over an entire corpus, we would definitely notice the time.
 
 ```{r}
 lemmatize_strings(documents)
@@ -169,9 +178,11 @@ lemmatize_strings(documents)
 
 The question, then, is what do you decide to do. For my money, lemmatization does a better job and getting words down to their actual meaning.
 
-```{python}
+```{python, error = FALSE}
+import nltk
 from nltk.stem import WordNetLemmatizer
-import pyreadr
+import pandas as pd
+import pyarrow
 
 # You will only need to do this once:
 
@@ -180,9 +191,9 @@ import pyreadr
 
 # Obs -- you'll need to import nltk.
 
-lyrics = pyreadr.read_r("D:/projects/courses/unstructured/data/allLyricsDF.RData")
+lyrics_pd = pd.read_feather('D:/projects/UDA/data/all_lyrics.feather')
 
-lyrics_pd = pd.DataFrame(lyrics['allLyricsDF'])
+lyrics_pd.lyrics = lyrics_pd.lyrics.astype(str)
 
 lyrics_sample = lyrics_pd.sample(1)
 
@@ -245,11 +256,33 @@ gsub('"', "", replacedText)
 ```
 
 
+```{python}
+# nltk.download('stopwords')
+# nltk.download('punkt')
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+ 
+stop_words = set(stopwords.words('english'))
+ 
+word_tokens = word_tokenize(lyrics_sample.lyric_lemma.to_string())
+ 
+filtered_sentence = [w for w in word_tokens if not w.lower() in stop_words]
+ 
+filtered_sentence = []
+ 
+for w in word_tokens:
+    if w not in stop_words:
+        filtered_sentence.append(w)
+ 
+print(filtered_sentence)
+```
+
+
 ## Text Processing Tools
 
 There are several R packages that will help us process text. The tm package is popular and automates most of our work. You already saw how we use the stemming and stopword removal functions, but tm is full of fun stuff and allows for one pass text processing.
 
-```{r, eval = FALSE}
+```{r, eval = TRUE}
 documentCorp <- SimpleCorpus(VectorSource(documents))
 
 stopWordRemoval <- function(x) {
@@ -275,12 +308,11 @@ library(tidytext)
 
 library(wordcloud2)
 
-allLyricsDF %>%
-  dplyr::filter(stringDistance < .2) %>% 
-  dplyr::select(lyrics, returnedArtistName) %>%
+all_lyrics_info %>%
+  dplyr::select(lyrics) %>%
   mutate(lyrics = as.character(lyrics), 
          lyrics = str_replace_all(lyrics, "\n", " "),   
-         lyrics = str_replace_all(lyrics, "\\[[A-Za-z]+\\s*[0-9]*]", ""), 
+         lyrics = str_replace_all(lyrics, "(\\[.*?\\])", ""), 
          lyrics = str_squish(lyrics), 
          lyrics = gsub("([a-z])([A-Z])", "\\1 \\2", lyrics)) %>%
   unnest_tokens(word, lyrics) %>% 
@@ -313,7 +345,7 @@ We can see that we have the data, but we are left with a complete mess.
 
 ```{r}
 hflLyrics <- str_replace_all(hflLyrics, "\n", " ") %>% 
-  str_replace_all(., "\\[[A-Za-z]+\\s*[0-9]*]", "") %>%
+  str_replace_all(., "(\\[.*?\\])", "") %>%
   str_squish(.) %>% 
   gsub("([a-z])([A-Z])", "\\1 \\2", .)
 
@@ -341,13 +373,12 @@ for i in range(len(hfl_lyrics)):
 hfl_pd = pd.DataFrame([hfl_list], columns = ['lyrics'])
 
 hfl_pd['lyrics'] = (
-  hfl_pd.lyrics.str.replace('\\[[A-Za-z]+\\s*[0-9]*]', '') 
+  hfl_pd.lyrics.str.replace('(\\[.*?\\])', '') 
   .str.replace('([a-z])([A-Z])', '\\1 \\2') 
 )
 
 
 ```
-
 
 For those that might like a little more grit to their Country, let's look at another song:
 
@@ -356,7 +387,7 @@ copperheadLyrics <- read_html("https://genius.com/Steve-earle-copperhead-road-ly
   html_nodes("#lyrics-root") %>% 
   html_text() %>% 
   str_replace_all(., "\n", " ") %>% 
-  str_replace_all(., "\\[\\w+\\s*[0-9]*]", "") %>% 
+  str_replace_all(., "(\\[.*?\\])", "") %>% 
   str_squish(.) %>% 
   gsub("([a-z])([A-Z])", "\\1 \\2", .)
 
@@ -370,7 +401,7 @@ choctawBingoLyrics <- read_html("https://genius.com/James-mcmurtry-choctaw-bingo
   html_nodes("#lyrics-root") %>% 
   html_text() %>% 
   str_replace_all(., "\n", " ") %>% 
-  str_replace_all(., "\\[\\w+\\s*\\w*\\]", "") %>% 
+  str_replace_all(., "(\\[.*?\\])", "") %>% 
   str_squish(.) %>% 
   gsub("([a-z])([A-Z])", "\\1 \\2", .)
 
@@ -464,13 +495,13 @@ idfDF <- songTF %>%
 rmarkdown::paged_table(idfDF)
 ```
 
-Our idf is just telling us what we need to know about the corpus-wide term counts. We can see that words that appear in all three of our songs have a very low idf, while words that appear in only song have a much higher idf.
+Our idf is just telling us what we need to know about the corpus-wide term counts. We can see that words that appear in all three of our songs have a very low idf, while words that appear in only one song have a much higher idf.
 
 ## tf-idf
 
 After considering the two in isolation, we can also consider what both of them will get for us together. If we take the term frequency to mean that words are appearing frequently within our text and we take our inverse document frequency to mean that we are only considering important words, we might imagine a set of words appearing commonly within a document, but not appearing within other documents as often. This would suggest high-weight words for a specific document. 
 
-It can be tempting to just cut stop words (which we will discuss next class) out and deal with everything that comes out -- this is not the place for that. Stopword removal, for all practical purposes, is brute force. If we want to have a bit of finese here, we want to leave open the possibility that words, even potentially common words within a document, can have different levels of importance across documents.
+It can be tempting to just cut stop words out and deal with everything that comes out -- this is not the place for that. Stopword removal, for all practical purposes, is brute force. If we want to have a bit of finesse here, we want to leave open the possibility that words, even potentially common words within a document, can have different levels of importance across documents.
 
 To get our tf-idf, let's join our tf data and our idf data together:
 
@@ -534,32 +565,22 @@ df_countvect = pd.DataFrame(data = hfl_tfidf.toarray(), index = ['hfl'],
 
 ### Practice Time
 
-Let's take about 20 minutes to work through the various those text descriptives. Just so that we can keep compounding everything, let's scrape some text from wikipedia. Since these will follow a pretty basic construction, grab one more page from Wikipedia (whatever you want).
+Just so that we can keep compounding everything, let's scrape some text from wikipedia. What can you learn from these texts?
 
 ```{r, eval = FALSE}
-library(rvest)
-
 f13Link <- "https://en.wikipedia.org/wiki/Friday_the_13th_(franchise)"
 
 halloweenLink <- "https://en.wikipedia.org/wiki/Halloween_(franchise)"
 
 evilDeadLink <- "https://en.wikipedia.org/wiki/Evil_Dead"
-
-read_html() %>% # Links will go here
-  html_nodes() %>% # The p tag will work for getting page text
-  html_text() %>% 
-  paste0(., collapse = " ") %>% # Here we collapse everything into one string 
-  tolower() # Making the words consistent
 ```
 
 ## N-grams
 
 We have primarily been living in the space of single words (and if those single words appear alongside other single words in a text). We know, however, that words rarely appear in isolation -- this is where n-grams come into play. In this case, the *n* is any number that we want to use. In most text exploration, bigrams and trigrams are going to be the most common n-grams that you will use, but you could use anything.
 
-Poking fun at bad country is a good time, so let's keep exploring our previously gotten album:
-
 ```{r}
-bigrams <- killLightsLyrics %>% 
+bigrams <- songData %>% 
   unnest_tokens(., ngrams, lyrics, token = "ngrams", n = 2) %>% 
   tidyr::separate(ngrams, c("word1", "word2"), sep = "\\s") %>% 
   count(word1, word2, sort = TRUE)
@@ -658,14 +679,12 @@ textdistance.cosine.similarity('soup can', 'soup tin')
 textdistance.levenshtein('soup can', 'soup tin')
 ```
 
-No matter the language you can also use the Jaro-Winkler metric. It gives provides a "score bump" for strings that start with the same letters.
+No matter the language you can also use the Jaro-Winkler metric. It provides a "score bump" for strings that start with the same letters.
 
 ```{python}
 textdistance.jaro_winkler.distance('soup can', 'soup tin')
 textdistance.jaro_winkler.similarity('soup can', 'soup tin')
 ```
-
-
 
 String distances can be handy for a great many tasks. If you want to find strings that are close to other strings (without being exact matches), then these distances can be useful. They can also be helpful when you want to join data frames with fields that might not match.  
 
@@ -779,7 +798,7 @@ With relatively few documents, we don't really have too much interesting to expl
 Since we already saw some of the best that modern country has to offer, let's look at an entire album worth of country music (Luke Bryan should offer some predictable results). We can scrape the song lyrics from the Genius page.
 
 ```{r, echo = FALSE}
-load("/Users/sethberry/courses/unstructured/data/killLightsLyrics.RData")
+load("D:/projects/courses/unstructured/data/killLightsLyrics.RData")
 ```
 
 
@@ -794,7 +813,7 @@ killLightsLyrics <- lapply(links, function(x) {
   songPage = read_html(x, encoding = "UTF-8") 
   
   lyrics = songPage %>% 
-    html_nodes(".lyrics") %>% 
+    html_nodes(".lyrics-root") %>% 
     html_text() %>% 
     str_replace_all(., "\n", " ") %>% 
     str_replace_all(., "\\[(.*?)\\]", "") %>% 
@@ -831,7 +850,7 @@ rmarkdown::paged_table(albumCors)
 
 These correlations are far more interesting! 
 
-Out of pure curiousity, what is correlated with the word *coffee*?
+Out of pure curiosity, what is correlated with the word *coffee*?
 
 ```{r}
 albumCors[albumCors$item1 == "coffee", ] %>% 
