@@ -1,0 +1,409 @@
+---
+title: "Text Analysis"
+description: |
+  Sentiment Analysis
+output:
+  distill::distill_article:
+    toc: true
+    toc_depth: 2
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## Sentiment Analysis
+
+Sentiment analysis is commonly used when we want to know the general *feelings* of what someone has written or said. Sentiment analysis is commonly seen applied to Twitter and other social media posts, but we can use it anywhere where people have written/said something (product reviews, song lyrics, final statements).
+
+Sentiment can take many different forms: positive/negative affect, emotional states, and even financial contexts.
+
+Let's take a peak at some simple sentiment analysis.
+
+### Simple Sentiment
+
+Let's consider the following statements:
+
+
+```{r}
+library(tidytext)
+
+statement <- "I dislike code, but I really love money."
+
+tokens <- tibble(text = statement) %>% 
+  unnest_tokens(tbl = ., output = word, input = text)
+
+tokens
+```
+
+Now, we can compare the tokens within our statement to some pre-defined dictionary of positive and negative words.
+
+```{r}
+library(tidyr)
+
+tokens %>%
+  inner_join(get_sentiments("bing")) %>% 
+  count(sentiment) %>% 
+  spread(sentiment, n, fill = 0) %>% 
+  mutate(sentiment = positive - negative)
+```
+
+When we use Bing's dictionary, we see that we get one positive word (love) and negative word (dislike) with a neutral overall sentiment (a sentiment of 0 would indicate neutrality, while anything above 0 has an increasing amount of positivity and anything below 0 has an increasing amount of negativity).
+
+Do you think that dislike and love are of the same magnitude? If I had to make a wild guess, I might say that love is stronger than dislike. Let's switch out our sentiment library to get something with a little better notion of polarity.
+
+```{r}
+# You will need to install the 'textdata' package!
+
+tokens %>%
+  inner_join(get_sentiments("afinn"))
+```
+
+Now this looks a bit more interesting! "Love" has a stronger positive polarity than "dislike" has negative polarity. So, we could guess that we would have some positive sentiment.
+
+If we divide the sum of our word sentiments by the number of words within the dictionary, we should get an idea of our sentence's overall sentiment.
+
+```{r}
+tokens %>%
+  inner_join(get_sentiments("afinn")) %>% 
+  summarize(n = nrow(.), sentSum = sum(value)) %>% 
+  mutate(sentiment = sentSum / n)
+```
+
+Our sentiment of .5 tells us that our sentence is positive, even if only slightly so.
+
+While these simple sentiment analyses provide some decent measures to the sentiment of our text, we are ignoring big chunks of our text by just counting keywords.
+
+For example, it is probably fair to say that "really love" is stronger than just "love". We might want to switch over to some techniques that consider *n*-grams and other text features to calculate sentiment.
+
+### Smarter Sentiment Analysis
+
+Words, by themselves, certainly have meaning. When we write or speak, though, we use language for more effectively if we craft statements that are more than just a collection of words. While word-level sentiment analysis can be a good starting point, it misses a lot of context. What happens when we use the word "really"? What about "not"? Even the humble "however" can change the sentiment of a sentence. 
+
+For this reason, we need a sentence-level understanding of sentiment. 
+
+Computationally, we have the following:
+
+$$C=c'_i,j,l/√(w_i,jn)$$
+
+Where:
+
+$$c'_{i,j}=∑{((1 + w_{amp} + w_{deamp})\cdot w_{i,j,k}^{p}(-1)^{2 + w_{neg}})}$$
+
+$$w_{amp}= (w_{b} > 1) + ∑{(w_{neg}\cdot (z \cdot w_{i,j,k}^{a}))}$$
+
+$$w_{deamp} = \max(w_{deamp'}, -1)$$
+
+$$w_{deamp'}= (w_{b} < 1) + ∑{(z(- w_{neg}\cdot w_{i,j,k}^{a} + w_{i,j,k}^{d}))}$$
+
+$$w_{b} = 1 + z_2 * w_{b'}$$
+
+$$w_{b'} = ∑{\\(|w_{adversative\,conjunction}|, ..., w_{i, j, k}^{p}, w_{i, j, k}^{p}, ..., |w_{adversative\,conjunction}| * -1}\\)$$
+
+$$w_{neg}= ≤ft(∑{w_{i,j,k}^{n}}\right) \bmod {2}$$  
+
+While all the formulas can be helpful, let's break down the steps a little more.
+
+1. Split paragraphs into individual sentences and each sentence becomes a bag of words.
+
+2. From that bag of words, extract out sets of words that match terms within a sentiment lexicon. These are called *polar clusters*.
+
+3. Assign a general polarity score to those polar clusters: 1 for positive and -1 for negative.
+
+4. Find the 4 words before each polar cluster word and 2 words after each polar cluster word. These words, called the *context cluster*, are evaluated to be neutral, *amplifiers*, or *deamplifiers*. Amplifiers *intensify* a polarity score, whereas deamplifiers *downtone* a polarity score. These words are also search for *negators* -- words that will fip the polarity of a word.
+
+5. Search for *adversative conjunctions* -- but, however, and although. What ever comes before the adversative gets deamplified and whatever comes after the adversative gets amplified.
+
+Is this an absolutely perfect metric? Of course not! It does, however, provide a better score than word-level sentiment without the complexity (and high data cost) of more advanced methods.
+
+We will use the *jockers* sentiment library, but many more are available. Depending on your exact needs, there are some dictionaries designed for different applications. 
+
+Before we engage in our whole sentiment analysis, let's take a look at a few things.
+
+Here is the dictionary that *jockers* will use.
+
+```{r}
+lexicon::hash_sentiment_jockers
+```
+
+You might want to use View() to get a complete look at what is happening in there.
+
+We should also take a peak at our valence shifters:
+
+```{r}
+lexicon::hash_valence_shifters
+```
+
+With all of that out of the way, let's get down to the matter at hand:
+
+```{r}
+library(sentimentr)
+
+library(lexicon)
+
+library(magrittr)
+
+statement <- "Choking on your alibis. But it's just the price I pay. Destiny is calling me. Open up my eager eyes, cause I'm Mister Brightside."
+
+sentiment(tolower(statement), polarity_dt = lexicon::hash_sentiment_jockers)
+```
+
+We can see that we get a much stronger sentiment score when we include more information within the sentence. While the first part of our sentence starts out with a negative word (dislike has a sentiment value of -1), we have an adversarial "but" that will downweight whatever is in the initial phrase and then we will have the amplified (from "really", with a default weight of .8) sentiment of "love" (with a weight of .75 in our dictionary).
+
+With all of this together, we get a much better idea about the sentiment of our text.
+
+There are also some handy functions within `sentimentr`:
+
+```{r}
+extractedTerms <- extract_sentiment_terms(statement, polarity_dt = lexicon::hash_sentiment_jockers)
+
+extractedTerms$positive
+
+attributes(extractedTerms)$counts
+
+attributes(extractedTerms)$elements
+```
+
+
+```{python}
+import nltk
+# Only run the following once:
+# nltk.download('vader_lexicon')
+
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+
+sid = SentimentIntensityAnalyzer()
+
+instruments['scores'] = instruments['reviewText'].apply(
+  lambda reviewText: sid.polarity_scores(reviewText))
+```
+
+You might also have an easy time using TextBlob:
+
+```{python}
+import textblob
+
+textblob.TextBlob('Smoke weed everyday!').sentiment
+```
+
+And if you want to hang out with the cool kids, use spaCy:
+
+```{python}
+import spacy
+from spacytextblob.spacytextblob import SpacyTextBlob
+
+# Run the following in your terminal:
+# python -m spacy download en_core_web_sm
+
+nlp = spacy.load('en_core_web_sm')
+nlp.add_pipe('spacytextblob')
+text = 'I had a really horrible day. It was the worst day ever! But every now and then I have a really good day that makes me happy.'
+doc = nlp(text)
+
+doc._.polarity
+```
+
+
+### Back To The Music
+
+While the text that we have used so far serves its purpose as an example quite well, we can always take a look at other written words.
+
+```{r}
+load(url("https://raw.githubusercontent.com/saberry/courses/master/hash_sentiment_vadar.RData"))
+
+all_lyrics_info$lyrics_new <- gsub("(\\[.*?\\])", "", all_lyrics_info$lyrics)
+
+cleanLyrics = allLyricsDF %>%
+  filter(stringDistance < .2) %>% 
+  dplyr::select(lyrics, returnedArtistName, returnedSong) %>%
+  mutate(lyrics = as.character(lyrics), 
+         lyrics = str_replace_all(lyrics, "\n", " "),   
+         lyrics = str_replace_all(lyrics, "(\\[.*?\\])", ""), # look different?
+         lyrics = str_squish(lyrics), 
+         lyrics = gsub("([a-z])([A-Z])", "\\1 \\2", lyrics))
+
+songSentiment = sentiment(get_sentences(cleanLyrics), 
+          polarity_dt = hash_sentiment_vadar) %>% 
+  group_by(returnedSong) %>% 
+  summarize(meanSentiment = mean(sentiment))
+```
+
+Naturally, we would want to join those sentiment values up with our original data:
+
+```{r}
+cleanLyrics = left_join(cleanLyrics, songSentiment, by = "returnedSong")
+```
+
+
+From here, we have several choices in front of us. One, we could use those sentiment values within a model (e.g., we might want to predict charting position). Or, we could use them for some further exploration:
+
+```{r}
+library(DT)
+
+sentimentBreaks = c(-1.7, -.5, 0, .5, 1.7)
+
+breakColors = c('rgb(178,24,43)','rgb(239,138,98)','rgb(253,219,199)','rgb(209,229,240)','rgb(103,169,207)','rgb(33,102,172)')
+
+datatable(cleanLyrics, rownames = FALSE, 
+              options = list(pageLength = 15, escape = FALSE, 
+                             columnDefs = list(list(targets = 1, visible = FALSE)))) %>% 
+  formatStyle("lyrics", "meanSentiment", backgroundColor = styleInterval(sentimentBreaks, breakColors))
+```
+
+
+We can also do some checking over time:
+
+```{r}
+library(ggplot2)
+
+load("C:/Users/sberry5/Documents/teaching/courses/unstructured/data/countryTop50.RData")
+
+allTop50 = allTop50 %>% 
+  group_by(song) %>% 
+  slice(1)
+
+cleanLyrics = left_join(cleanLyrics, allTop50, by = c("returnedSong" = "song"))
+
+cleanLyrics %>% 
+  group_by(date) %>% 
+  na.omit() %>% 
+  summarize(meanSentiment = mean(meanSentiment)) %>% 
+  ggplot(., aes(date, meanSentiment)) + 
+  geom_point() +
+  theme_minimal()
+```
+
+
+That is pretty messy (but I am curious about that really happy month), so let's try something else:
+
+```{r}
+library(gganimate)
+
+animatedYears <- cleanLyrics %>% 
+  mutate(year = lubridate::year(date), 
+         month = lubridate::month(date)) %>% 
+  group_by(year, month, date) %>% 
+  na.omit() %>% 
+  summarize(meanSentiment = mean(meanSentiment)) %>% 
+  ggplot(., aes(as.factor(month), meanSentiment, color = meanSentiment)) + 
+  geom_point() +
+  scale_color_distiller(type = "div") +
+  theme_minimal() +
+  transition_states(year,
+                    transition_length = length(1975:2019),
+                    state_length = 3) +
+  ggtitle('Year: {closest_state}')
+
+animate(animatedYears, fps = 5)
+```
+
+
+
+```{r}
+cleanLyrics %>% 
+  mutate(year = lubridate::year(date)) %>% 
+  group_by(year) %>% 
+  na.omit() %>% 
+  summarize(meanSentiment = mean(meanSentiment)) %>% 
+  ggplot(., aes(year, meanSentiment)) + 
+  geom_col() +
+  theme_minimal()
+```
+
+
+## Transformers
+
+```{python}
+from transformers import pipeline
+import torch
+
+sentiment_analysis = pipeline('sentiment-analysis')
+
+pos_text = 'I enjoy studying computational algorithms.'
+neg_text = 'I dislike code, but I really love money.'
+
+
+result = sentiment_analysis(pos_text)[0]
+print("Label:", result['label'])
+print("Confidence Score:", result['score'])
+print()
+result = sentiment_analysis(neg_text)[0]
+print("Label:", result['label'])
+print("Confidence Score:", result['score'])
+```
+
+
+## Other Text Fun
+
+Sentiment analysis is always a handy tool to have around. You might also want to explore other descriptive aspects of your text.
+
+The `koRpus` package allows for all types of interesting types descriptives. There are a great number of readability and lexical diversity statistics (Fucks is likely my favorite).
+
+We need to tokenize our text in a manner that will please koRpus.
+
+<!-- ### Embeddings -->
+
+<!-- English is hard and seeing how words relate to other words can be tricky. Let's think through something weird: -->
+
+<!-- $$\text{church} - \text{jesus} + \text{muhammad} = \text{mosque}$$ -->
+
+<!-- Or how about: -->
+
+<!-- $$\text{Washing D.C.} - \text{America} + \text{Mexico} = \text{Mexico City}$$ -->
+
+<!-- What is the purpose here? Word embeddings start to break down how words can be different, but still deal in the same contextual space. Whether we are talking about a church or a mosque, we are just dealing with a place of worship. If we have two different text documents (one talking about mosques and one talking about churches), it would be nice to be able to recognize that they are largely talking about the same idea. -->
+
+<!-- ```{r} -->
+<!-- library(text2vec) -->
+
+<!-- links <- c("https://en.wikipedia.org/wiki/Christianity",  -->
+<!--            "https://en.wikipedia.org/wiki/Islam",  -->
+<!--            "https://en.wikipedia.org/wiki/Muslims",  -->
+<!--            "https://en.wikipedia.org/wiki/Jesus",  -->
+<!--            "https://en.wikipedia.org/wiki/Muhammad",  -->
+<!--            "https://en.wikipedia.org/wiki/Quran",  -->
+<!--            "https://en.wikipedia.org/wiki/Bible") -->
+
+<!-- allText <- lapply(links, function(x) { -->
+<!--   read_html(x) %>%  -->
+<!--   html_nodes("p") %>%  -->
+<!--   html_text() %>%  -->
+<!--   gsub("\\[[0-9]*\\]|[[:punct:]]", " ", .) %>%  -->
+<!--   stringr::str_squish(.) %>%  -->
+<!--   tolower(.) %>%  -->
+<!--   tm::removeWords(., tm::stopwords("en")) -->
+<!-- }) -->
+
+<!-- tokens <- space_tokenizer(unlist(allText)) -->
+
+<!-- it <- itoken(tokens, progressbar = FALSE) -->
+
+<!-- vocab <- create_vocabulary(it) -->
+
+<!-- vocab <- prune_vocabulary(vocab, term_count_min = 20L) -->
+
+<!-- vectorizer <- vocab_vectorizer(vocab) -->
+
+<!-- tcm <- create_tcm(it, vectorizer, skip_grams_window = 5L) -->
+
+<!-- glove <- GlobalVectors$new(word_vectors_size = 350, vocabulary = vocab, x_max = 10) -->
+
+<!-- glove_main <- glove$fit_transform(tcm, n_iter = 100) -->
+
+<!-- glove_context <- glove$components -->
+
+<!-- word_vectors <- glove_main + t(glove_context) -->
+
+<!-- churchVec <- word_vectors["christian", , drop = FALSE] -  -->
+<!--   word_vectors["jesus", , drop = FALSE] +  -->
+<!--   word_vectors["muhammad", , drop = FALSE] -->
+
+<!-- cos_sim = sim2(x = word_vectors, y = churchVec, method = "cosine", norm = "l2") -->
+
+<!-- head(sort(cos_sim[, 1], decreasing = TRUE), 10) -->
+<!-- ``` -->
+
+<!-- <aside> -->
+<!-- If you looked at the Selenium code and noticed some of the code above, you might have seen some code behaving in a way that seems very similar to Python. Code like `glove$fit_transform()` is using the `R6` class. It is not a base R class, but is a package. -->
+<!-- </aside> -->
