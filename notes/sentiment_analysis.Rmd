@@ -144,7 +144,7 @@ library(lexicon)
 
 library(magrittr)
 
-statement <- "Choking on your alibis. But it's just the price I pay. Destiny is calling me. Open up my eager eyes, cause I'm Mister Brightside."
+statement <- "I dislike code, but I really love money."
 
 sentiment(tolower(statement), polarity_dt = lexicon::hash_sentiment_jockers)
 ```
@@ -168,24 +168,61 @@ attributes(extractedTerms)$elements
 
 ```{python}
 import nltk
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+import pandas as pd
+import pyarrow
+
+# You will only need to do this once:
+
 # Only run the following once:
 # nltk.download('vader_lexicon')
 
-from nltk.sentiment.vader import SentimentIntensityAnalyzer
+# lyrics_pd = pd.read_feather('D:/projects/UDA/data/all_lyrics.feather')
+
+lyrics_pd = pd.read_feather('C:/Users/sberry5/Documents/teaching/UDA/data/all_lyrics.feather')
+
+lyrics_pd['lyrics'] = (
+  lyrics_pd.lyrics.str.replace('(\\[.*?\\])', '') 
+  .str.replace('([a-z])([A-Z])', '\\1 \\2') 
+)
+
+lyrics_pd['lyrics'] = lyrics_pd['lyrics'].astype(str)
 
 sid = SentimentIntensityAnalyzer()
 
-instruments['scores'] = instruments['reviewText'].apply(
-  lambda reviewText: sid.polarity_scores(reviewText))
+lyrics_pd['scores'] = lyrics_pd['lyrics'].apply(
+  lambda lyrics: sid.polarity_scores(lyrics))
+  
+lyrics_pd['scores'].iloc[0]
+  
+lyrics_pd[['neg', 'neu', 'pos', 'compound']] = pd.DataFrame(lyrics_pd.scores.tolist(), index = lyrics_pd.index)
 ```
 
-You might also have an easy time using TextBlob:
+You might also have an easy time using TextBlob. Honestly, TextBlob has all of the nltk functionality, but with far less hassle. It is, however, very slow!
 
 ```{python}
 import textblob
 
-textblob.TextBlob('Smoke weed everyday!').sentiment
+textblob.TextBlob('dogs are animals').sentiment
+textblob.TextBlob('Dogs make great pets').sentiment.polarity
+textblob.TextBlob('Dogs are filthy animals, but I really do love them.').sentiment
+
+# The following code absolutely works, but will take several minutes to run:
+
+# lyrics_pd['blob_polarity'] = lyrics_pd['lyrics'].apply(
+#   lambda lyrics: textblob.TextBlob(lyrics).sentiment.polarity
 ```
+
+What do you think *subjectivity* means?
+
+You can also use an NB approach from `textblox`:
+
+```{python}
+from textblob.sentiments import NaiveBayesAnalyzer
+
+TextBlob("Dogs are filthy animals, but I really do love them.", analyzer=NaiveBayesAnalyzer())
+```
+
 
 And if you want to hang out with the cool kids, use spaCy:
 
