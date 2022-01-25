@@ -315,22 +315,68 @@ cleanLyrics %>%
 ## Transformers
 
 ```{python}
+from bs4 import BeautifulSoup
+import pandas as pd
+import requests
 from transformers import pipeline
 import torch
 
+# The HuggingFace folks are just making stuff too easy at this point: 
+# https://huggingface.co/docs/transformers/main_classes/pipelines
+
 sentiment_analysis = pipeline('sentiment-analysis')
 
-pos_text = 'I enjoy studying computational algorithms.'
-neg_text = 'I dislike code, but I really love money.'
+test_text = 'I dislike code, but I really love money.'
+
+result = sentiment_analysis(test_text)
+
+print("Label:", result[0]['label'])
+
+print("Confidence Score:", result[0]['score'])
+
+links = [
+  'https://genius.com/James-mcmurtry-we-cant-make-it-here-anymore-lyrics', 
+  'https://genius.com/Olivia-rodrigo-drivers-license-lyrics'
+  ]
+
+def scrape_clean(link):
+  
+  song_request = requests.get(link)
+
+  song_content = BeautifulSoup(song_request.content, 'html.parser') 
+
+  song_lyrics = song_content.select('#lyrics-root')
+
+  song_list = []
+
+  for i in range(len(song_lyrics)):
+      song_list.append(song_lyrics[i].getText())
+
+  song_pd = pd.DataFrame([song_list], columns = ['lyrics'])
+
+  song_pd['lyrics'] = (
+    song_pd.lyrics.str.replace('(\\[.*?\\])', '') 
+    .str.replace('([a-z])([A-Z])', '\\1 \\2') 
+  )
+  
+  return song_pd
+
+song_lyrics = pd.DataFrame()
+
+for links in links:
+  song_lyrics = song_lyrics.append(scrape_clean(links))
+  
+song_lyrics['lyrics'] = song_lyrics['lyrics'].str.slice(0,511)  
+
+def sentiment_results(lyrics):
+  sent_result = sentiment_analysis(lyrics)
+  label = sent_result[0]['label']
+  score = sent_result[0]['score']
+  return [label, score]
 
 
-result = sentiment_analysis(pos_text)[0]
-print("Label:", result['label'])
-print("Confidence Score:", result['score'])
-print()
-result = sentiment_analysis(neg_text)[0]
-print("Label:", result['label'])
-print("Confidence Score:", result['score'])
+sentiment_results(song_lyrics['lyrics'].iloc[0])
+
 ```
 
 
