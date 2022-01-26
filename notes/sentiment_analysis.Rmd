@@ -231,6 +231,7 @@ And if you want to hang out with the cool kids, use spaCy:
 
 ```{python}
 import spacy
+
 from spacytextblob.spacytextblob import SpacyTextBlob
 
 # Run the following in your terminal:
