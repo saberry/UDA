@@ -27,7 +27,9 @@ Let's consider the following statements:
 
 
 ```{r}
+library(dplyr)
 library(tidytext)
+library(magrittr)
 
 statement <- "I dislike code, but I really love money."
 
@@ -219,8 +221,9 @@ You can also use an NB approach from `textblox`:
 
 ```{python}
 from textblob.sentiments import NaiveBayesAnalyzer
-
-TextBlob("Dogs are filthy animals, but I really do love them.", analyzer=NaiveBayesAnalyzer())
+# nltk.download('punkt')
+# nltk.download('movie_reviews')
+textblob.TextBlob("Dogs are filthy animals, but I really do love them.", analyzer=NaiveBayesAnalyzer()).sentiment
 ```
 
 
@@ -242,111 +245,111 @@ doc._.polarity
 ```
 
 
-### Back To The Music
+<!-- ### Back To The Music -->
 
-While the text that we have used so far serves its purpose as an example quite well, we can always take a look at other written words.
+<!-- While the text that we have used so far serves its purpose as an example quite well, we can always take a look at other written words. -->
 
-```{r}
-load(url("https://raw.githubusercontent.com/saberry/courses/master/hash_sentiment_vadar.RData"))
+<!-- ```{r} -->
+<!-- load(url("https://raw.githubusercontent.com/saberry/courses/master/hash_sentiment_vadar.RData")) -->
 
-all_lyrics_info$lyrics_new <- gsub("(\\[.*?\\])", "", all_lyrics_info$lyrics)
+<!-- all_lyrics_info$lyrics_new <- gsub("(\\[.*?\\])", "", all_lyrics_info$lyrics) -->
 
-cleanLyrics = allLyricsDF %>%
-  filter(stringDistance < .2) %>% 
-  dplyr::select(lyrics, returnedArtistName, returnedSong) %>%
-  mutate(lyrics = as.character(lyrics), 
-         lyrics = str_replace_all(lyrics, "\n", " "),   
-         lyrics = str_replace_all(lyrics, "(\\[.*?\\])", ""), # look different?
-         lyrics = str_squish(lyrics), 
-         lyrics = gsub("([a-z])([A-Z])", "\\1 \\2", lyrics))
+<!-- cleanLyrics = allLyricsDF %>% -->
+<!--   filter(stringDistance < .2) %>%  -->
+<!--   dplyr::select(lyrics, returnedArtistName, returnedSong) %>% -->
+<!--   mutate(lyrics = as.character(lyrics),  -->
+<!--          lyrics = str_replace_all(lyrics, "\n", " "),    -->
+<!--          lyrics = str_replace_all(lyrics, "(\\[.*?\\])", ""), # look different? -->
+<!--          lyrics = str_squish(lyrics),  -->
+<!--          lyrics = gsub("([a-z])([A-Z])", "\\1 \\2", lyrics)) -->
 
-songSentiment = sentiment(get_sentences(cleanLyrics), 
-          polarity_dt = hash_sentiment_vadar) %>% 
-  group_by(returnedSong) %>% 
-  summarize(meanSentiment = mean(sentiment))
-```
+<!-- songSentiment = sentiment(get_sentences(cleanLyrics),  -->
+<!--           polarity_dt = hash_sentiment_vadar) %>%  -->
+<!--   group_by(returnedSong) %>%  -->
+<!--   summarize(meanSentiment = mean(sentiment)) -->
+<!-- ``` -->
 
-Naturally, we would want to join those sentiment values up with our original data:
+<!-- Naturally, we would want to join those sentiment values up with our original data: -->
 
-```{r}
-cleanLyrics = left_join(cleanLyrics, songSentiment, by = "returnedSong")
-```
-
-
-From here, we have several choices in front of us. One, we could use those sentiment values within a model (e.g., we might want to predict charting position). Or, we could use them for some further exploration:
-
-```{r}
-library(DT)
-
-sentimentBreaks = c(-1.7, -.5, 0, .5, 1.7)
-
-breakColors = c('rgb(178,24,43)','rgb(239,138,98)','rgb(253,219,199)','rgb(209,229,240)','rgb(103,169,207)','rgb(33,102,172)')
-
-datatable(cleanLyrics, rownames = FALSE, 
-              options = list(pageLength = 15, escape = FALSE, 
-                             columnDefs = list(list(targets = 1, visible = FALSE)))) %>% 
-  formatStyle("lyrics", "meanSentiment", backgroundColor = styleInterval(sentimentBreaks, breakColors))
-```
+<!-- ```{r} -->
+<!-- cleanLyrics = left_join(cleanLyrics, songSentiment, by = "returnedSong") -->
+<!-- ``` -->
 
 
-We can also do some checking over time:
+<!-- From here, we have several choices in front of us. One, we could use those sentiment values within a model (e.g., we might want to predict charting position). Or, we could use them for some further exploration: -->
 
-```{r}
-library(ggplot2)
+<!-- ```{r} -->
+<!-- library(DT) -->
 
-load("C:/Users/sberry5/Documents/teaching/courses/unstructured/data/countryTop50.RData")
+<!-- sentimentBreaks = c(-1.7, -.5, 0, .5, 1.7) -->
 
-allTop50 = allTop50 %>% 
-  group_by(song) %>% 
-  slice(1)
+<!-- breakColors = c('rgb(178,24,43)','rgb(239,138,98)','rgb(253,219,199)','rgb(209,229,240)','rgb(103,169,207)','rgb(33,102,172)') -->
 
-cleanLyrics = left_join(cleanLyrics, allTop50, by = c("returnedSong" = "song"))
-
-cleanLyrics %>% 
-  group_by(date) %>% 
-  na.omit() %>% 
-  summarize(meanSentiment = mean(meanSentiment)) %>% 
-  ggplot(., aes(date, meanSentiment)) + 
-  geom_point() +
-  theme_minimal()
-```
+<!-- datatable(cleanLyrics, rownames = FALSE,  -->
+<!--               options = list(pageLength = 15, escape = FALSE,  -->
+<!--                              columnDefs = list(list(targets = 1, visible = FALSE)))) %>%  -->
+<!--   formatStyle("lyrics", "meanSentiment", backgroundColor = styleInterval(sentimentBreaks, breakColors)) -->
+<!-- ``` -->
 
 
-That is pretty messy (but I am curious about that really happy month), so let's try something else:
+<!-- We can also do some checking over time: -->
 
-```{r}
-library(gganimate)
+<!-- ```{r} -->
+<!-- library(ggplot2) -->
 
-animatedYears <- cleanLyrics %>% 
-  mutate(year = lubridate::year(date), 
-         month = lubridate::month(date)) %>% 
-  group_by(year, month, date) %>% 
-  na.omit() %>% 
-  summarize(meanSentiment = mean(meanSentiment)) %>% 
-  ggplot(., aes(as.factor(month), meanSentiment, color = meanSentiment)) + 
-  geom_point() +
-  scale_color_distiller(type = "div") +
-  theme_minimal() +
-  transition_states(year,
-                    transition_length = length(1975:2019),
-                    state_length = 3) +
-  ggtitle('Year: {closest_state}')
+<!-- load("C:/Users/sberry5/Documents/teaching/courses/unstructured/data/countryTop50.RData") -->
 
-animate(animatedYears, fps = 5)
-```
+<!-- allTop50 = allTop50 %>%  -->
+<!--   group_by(song) %>%  -->
+<!--   slice(1) -->
 
+<!-- cleanLyrics = left_join(cleanLyrics, allTop50, by = c("returnedSong" = "song")) -->
+
+<!-- cleanLyrics %>%  -->
+<!--   group_by(date) %>%  -->
+<!--   na.omit() %>%  -->
+<!--   summarize(meanSentiment = mean(meanSentiment)) %>%  -->
+<!--   ggplot(., aes(date, meanSentiment)) +  -->
+<!--   geom_point() + -->
+<!--   theme_minimal() -->
+<!-- ``` -->
 
 
-```{r}
-cleanLyrics %>% 
-  mutate(year = lubridate::year(date)) %>% 
-  group_by(year) %>% 
-  na.omit() %>% 
-  summarize(meanSentiment = mean(meanSentiment)) %>% 
-  ggplot(., aes(year, meanSentiment)) + 
-  geom_col() +
-  theme_minimal()
-```
+<!-- That is pretty messy (but I am curious about that really happy month), so let's try something else: -->
+
+<!-- ```{r} -->
+<!-- library(gganimate) -->
+
+<!-- animatedYears <- cleanLyrics %>%  -->
+<!--   mutate(year = lubridate::year(date),  -->
+<!--          month = lubridate::month(date)) %>%  -->
+<!--   group_by(year, month, date) %>%  -->
+<!--   na.omit() %>%  -->
+<!--   summarize(meanSentiment = mean(meanSentiment)) %>%  -->
+<!--   ggplot(., aes(as.factor(month), meanSentiment, color = meanSentiment)) +  -->
+<!--   geom_point() + -->
+<!--   scale_color_distiller(type = "div") + -->
+<!--   theme_minimal() + -->
+<!--   transition_states(year, -->
+<!--                     transition_length = length(1975:2019), -->
+<!--                     state_length = 3) + -->
+<!--   ggtitle('Year: {closest_state}') -->
+
+<!-- animate(animatedYears, fps = 5) -->
+<!-- ``` -->
+
+
+
+<!-- ```{r} -->
+<!-- cleanLyrics %>%  -->
+<!--   mutate(year = lubridate::year(date)) %>%  -->
+<!--   group_by(year) %>%  -->
+<!--   na.omit() %>%  -->
+<!--   summarize(meanSentiment = mean(meanSentiment)) %>%  -->
+<!--   ggplot(., aes(year, meanSentiment)) +  -->
+<!--   geom_col() + -->
+<!--   theme_minimal() -->
+<!-- ``` -->
 
 
 ## Transformers
