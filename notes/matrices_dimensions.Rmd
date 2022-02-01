@@ -1,0 +1,586 @@
+---
+title: "Matrix Algebra"
+description: |
+  The root of all that's evil
+output:
+  distill::distill_article:
+    toc: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+Let's review some fundamentals. 
+
+This is a scalar:
+
+```{r}
+scalar_1 <- 1
+```
+
+This is a vector:
+
+```{r}
+vector_1 <- c(2, 4)
+
+length(vector_1)
+```
+
+This is a matrix:
+
+```{r}
+matrix_1 <- matrix(c(2, 4, 6, 8, 
+                     8, 6, 4, 2),
+                   ncol = 2, 
+                   byrow = FALSE)
+
+dim(matrix_1)
+```
+
+These are objects we know. What we might not think about, though, is how these objects are being used by the modeling functions you use everday.
+
+Obviously, you can add scalars together. What, though, can you do with everything else?
+
+You can add a vector to a matrix:
+
+```{r}
+vector_1 + matrix_1
+```
+
+And multiply a vector and a matrix:
+
+```{r}
+vector_1 * matrix_1
+```
+
+We can multiply a matrix by itself:
+
+```{r}
+matrix_1 * matrix_1
+
+```
+
+But we cannot perform a matrix multiplication on this. What is the differences between normal multiplication and matrix multiplication? 
+
+```{r}
+t(matrix_1) %*% matrix_1
+```
+
+The only reason this works is because our dimensions are *conformable*. The original matrix is 4 by 2 and the transpose matrix is 2 by 4. As long as those outside dimenions match -- 2 and 2 -- we can use those objects for multiplication and addition. You will notice that these two matrices yielded a 2 by 2 matrix. Whatever our outside numbers are will provide the dimensions for the final matrix!
+
+Whether you knew it or not, ever stat/ML method is full of matrix algebra (and optimization).
+
+Let's see something that you already know:
+
+```{r}
+set.seed(1001)
+
+N <- 1000 # sample size
+k <- 2  # variables
+X <- matrix(rnorm(N * k), ncol = k)  
+X <- cbind(X, 1)
+y <- -.5 + .2 * X[, 1] + rnorm(N, sd = .5)  
+
+head(X)
+
+head(y)
+```
+
+Now we can do some matrix multiplication. Let's take the transpose of X, multiply it by the original X, and solve the resultant matrix:
+
+```{r}
+transposeX <- t(X)
+
+multiplyX <- transposeX %*% X
+
+solveX <- solve(multiplyX) 
+
+solveX
+```
+
+The `solve` function can solve linear systems, but we are using it to find the inverse of the matrix. The long way of finding the matrix inverse is nothing but pain.
+
+And here is the beauty -- we took that X matrix, multiplied it by its transposed self, and reduced its dimension to a 3 X 3 matrix.
+
+Next, let's take that transposed X and multiply it by Y:
+
+```{r}
+multiplyY <- transposeX %*% y
+multiplyY
+```
+
+Remember that our matrices need to be conformable, so we have a 3 X 1 matrix for multiplyY.
+
+Finally, we can take our solveX and multiply it by the multiplyY matrix:
+
+```{r}
+solveX %*% multiplyY
+```
+
+All of that to get exactly 3 values in a 3 X 1 matrix. Some of you might have played this game before, but for those who haven't, we taken the long way to find this:
+
+```{r}
+summary(lm(y ~ X[, 1:2]))
+```
+
+Correlation, regression, and just about everything else is done with matrix multiplication.
+
+We can use matrix multiplication in a variety of ways, one of which is to reduce the dimensions of our data!
+
+## PCA
+
+Principle Components Analysis is not my favorite dimension reduction technique, but it is valuable for modeling purposes (and is *the* introduction to dimension reduction as a whole).
+
+Let's see it in action and then pick it apart.
+
+We can start with some generic data:
+
+```{r}
+library(psych)
+```
+
+And then pass that data to `prcomp`:
+
+```{r}
+bfi_clean <- na.omit(bfi)
+
+head(bfi_clean)
+
+bfi_scale <- bfi_clean[, grepl("\\d", names(bfi_clean))]
+
+prcomp(bfi_scale, scale. = TRUE)
+```
+
+So...we didn't reduce our dimensions at all. The goal of PCA is to extract all of the variance out of the data and roll that into new variable -- the principal components. Where PCA becomes useful is in the amount of variance that each component represents. The first component will try to extract all of the total variance out of the data. Once it has all of the total variance between variables that it can find, it will move onto the the next chunk, until all of the variance is gone. Do we need 100% of the variance...unlikely. 
+
+```{r}
+summary(prcomp(bfi_scale, scale. = TRUE))
+```
+
+We can see how much variance those components account for.
+
+If we want to use those variables to tie back into our data, here is how we do it:
+
+```{r}
+pca_results <- prcomp(bfi_scale, scale. = TRUE)
+
+ggcorrplot::ggcorrplot(cor(pca_results$x))
+```
+
+Great, but how exactly did that happen? With *eigenvalues* and *eigenvectors*.
+
+Let's define a small matrix called *A*:
+
+```{r}
+Amatrix <- matrix(c(1, 3, 4, 5), 
+                  nrow = 2, 
+                  ncol = 2)
+
+Amatrix
+```
+
+An eigenvector is a special value that can perform a linear transformation to a matrix; an eigenvalue is the value that scales the eigenvector. You can conceptualize it by thinking that an eigenvector provides the direction to scale a matrix and the eigenvalue is the strength of the scale. We can find the eigenvalues and eigenvectors as follows:
+
+$$Av = \lambda v$$
+
+Where $v$ is the eigenvector and $\delta$ is the eigenvalue.
+
+We can shuffle this equation around as follows:
+
+$$Av - \lambda v = 0$$
+
+As this is, we cannot factor this down any more. Remember that *A* is a matrix and $\delta$ is a single value, so we really can't do much more. We can, however, make a substition with the identity matrix:
+
+$$Av - \lambda v = Av - \lambda I v$$
+
+<aside>
+An identity matrix is the same size as the original matrix, with 1's on the diagonal and 0's elsewhere.
+</aside>
+
+With that identity matrix in there, we can reduce this to:
+
+$$(A - \lambda I)v = 0$$
+
+To begin solving this more, we need to find the determinant (it finds the inverse of any matrix). The determinant for a 2x2 matrix is found as follows:
+
+```{r}
+matrix(c("a", "c", "b", "d"), nrow = 2, ncol = 2)
+```
+
+$$|A| = ad - bc$$
+
+So in our aMatrix, we would have:
+
+```{r}
+1*5 - 4*3
+
+det(Amatrix)
+```
+
+To solve $(A - \lambda I)$, we get the following:
+
+$$
+\begin{pmatrix}
+1 & 4 \\
+3 & 5
+\end{pmatrix} - \lambda
+\begin{pmatrix}
+1 & 0 \\
+0 & 1
+\end{pmatrix}
+$$
+
+Which goes to:
+
+$$
+\begin{pmatrix}
+1 & 4 \\
+3 & 5
+\end{pmatrix} - 
+\begin{pmatrix}
+\lambda & 0 \\
+0 & \lambda
+\end{pmatrix}
+$$
+
+And then:
+
+$$
+\begin{pmatrix}
+1 - \lambda & 4 \\
+3 & 5 - \lambda
+\end{pmatrix} 
+$$
+
+So to find the determinant of this matrix, we have:
+
+$$det(A − \lambda I) = (1 − \lambda)(5 − \lambda) − (4 * 3)$$
+
+And solving that equation will get us:
+
+$$−7 − 6 \lambda + \lambda^2$$
+
+To produce a quadratic equation:
+
+$$\lambda^2  - 6 \lambda − 7$$
+
+Which solves to -1 and 7: our eigenvalues!
+
+
+All that, just to do the following:
+
+```{r}
+eigen(Amatrix)
+```
+
+And those values are how variance gets partitioned in PCA.
+
+# Naive Bayes
+
+With any exercise in statistical learning, the *Naive Bayesian* model is a great place to start. Why? Mostly because it tends to perform pretty well without too much hassle (i.e., tuning and various parameter tweaking). This reasonable performance even comes with some pretty central assumptions violated -- the naive part of the method comes from an assumption that observations are always completely and totally independent with regard to outcome variable. Another handy feature of the Naive Bayes is that it can handle missing observations without any issue. It will also work on smaller training set or data with higher correlations among variables. Perhaps most importantly, it is blazing fast compared to more complex methods, with often similar performance. 
+
+With all of this together, it becomes a really solid baseline for problems -- if another technique cannot beat a Naive Bayes on a problem, then it is probably not going to be worth using for that problem. The Naive Bayes has been used with great effect from everything to spam detection to determining the probability of a specific class of customers canceling a service (e.g., what is the probability that a 50 year-old, with a limited data plan, using a flip phone, would cancel his cell service). 
+
+With "Bayesian" in the name, you would probably guess that we are going to be dealing with probabilities and we certainly are. Not that you need it, but let's do a really quick refresher on probability, odds, and likelihoods.
+
+*Probability* is bound between 0 and 1, and indicates the chance of an event occurring. 
+
+*Odds* are scaled from 0 to $\infty$ and are the ratio of the probability of a particular event occurring to the probability of it not occurring. With a probability of occurrance at .25, we would have an odds of 1 to 4 of the event occurring.
+
+*Likelihood* is the ratio of two related conditional probabilites and can be expressed in two different forms:
+
+- The probability of outcome *A* given *B*, and the probability of *A* given not *B* (*A* is conditional on *B*)
+
+- The odds of *A* given *B*, and the overall odds of *A*
+
+Conversion between probability and odds is as follows:
+
+$$odds = -1 +  \frac{1}{1 - probability}$$
+$$probability = 1 - \frac{1}{1 + odds}$$
+
+If we know that we have a probability of .7, we find an odds of:
+
+```{r}
+-1 + (1 / (1 - .7))
+```
+
+If we have an odds of 1.75, we can find a probability of:
+
+```{r}
+1 - (1 / (1 + 1.75))
+```
+
+With this information in hand, we can then compute the independent conditional probability distribution (conditioned on the outcome variable) for each and every predictor variable. From there, we are taking the product of those conditional probabilities.
+
+Let's see how it works with some text:
+
+```{r, echo = FALSE}
+library(dplyr)
+data.frame(songID = 1:4, 
+           huntin = c(1, 1, 1, 1), 
+           fishing = c(0, 0, 1, 0), 
+           lovin = c(1, 0, 0, 0),
+           day = c(0, 1, 1, 1),
+           country = c(1, 0, 0, 0), 
+           boy = c(1, 0, 0, 0), 
+           street = c(0, 0, 0, 1), 
+           city = c(0, 1, 0, 0),
+           rapCountry = c(1, 1, 0, 0)
+) %>% 
+  knitr::kable()
+```
+
+We can find the probability for any given thing within this data. For example, there is a probability of .75 that "day" will occur -- P(day) = $3/4$ = .75. The probability that a song is rap is .5 -- P(rap) = $2/4$ = .5.  
+
+We could just compute the conditional probability for each song belonging to one of the two classes, but this becomes increasingly intensive as we add more variables. Instead, we can use the following equation to make things easier:
+
+$$P(C_k|x_1,x_2,..., x_n) = \frac{P(C_k)P(x_1|C_k)P(x_2|C_k)...P(X_n|C_k)}{P(x_1,x_2,...,x_n)}$$
+
+We can break down those components just a bit more:
+
+Posterior probability = $P(C_k|x_1,x_2,..., x_n)$
+
+Likelihood = $P(X_n|C_k)$
+
+Class prior probability = $P(C_k)$
+
+Predictor prior probability = $P(x_1,x_2,...,x_n)$
+
+If we expand our data a bit:
+
+```{r, echo = FALSE}
+data.frame(class = rep(c("country", "rap"), each = 4), 
+           word = rep(c("country", "boy", "street", "city"), times = 2), 
+           Yes = c(10, 4, 10, 8, 15, 2, 25, 5), 
+           No = c(10, 16, 10, 12, 65, 78, 55, 75), 
+           grandTotal = c(20, "", "", "", 80, "", "", ""), stringsAsFactors = FALSE)
+```
+
+Given what we know about the totals and probabilities, we could look at new lyrics and figure out the probability that it is either rap or country.
+
+> I'm a country boy, won't see me in the city.
+
+We can see that we don't see "street" in this lyric, so we will need to account for that with our "No" column.
+
+This means that we have the following problem to solve:
+
+$$\frac{P(country)P(country|country)P(boy|country)P(\neg street|country)P(city|country)}{P(country, boy,\neg street, city)}$$
+
+We can compute the likelihood of this new lyric belonging to a country song by:
+
+$$(20⁄100)*(10⁄20)*(4⁄20)*(10⁄20)*(8⁄20)$$
+
+```{r}
+countryLikelihood <- (20/100)*(10/20)*(4/20)*(10/20)*(8/20)
+
+countryLikelihood
+```
+
+And the likelihood it is rap:
+
+$$(80⁄100)*(15⁄80)*(2⁄80)*(55⁄80)*(5⁄80)$$
+
+```{r}
+rapLikelihood <- (80/100)*(15/80)*(2/80)*(55/80)*(5/80)
+
+rapLikelihood
+```
+
+This gives us the probability of the song being country of:
+
+```{r}
+countryLikelihood / (countryLikelihood + rapLikelihood)
+```
+
+
+## A Baby Step Into Text Classification
+
+```{r}
+library(dplyr)
+library(stringr)
+library(tm)
+
+load("D:/projects/UDA/data/all_lyrics.RData")
+
+model_data <- all_lyrics_info[duplicated(all_lyrics_info$lyric_link) == FALSE, 
+                              c("lyrics", "genre")] |>
+  na.omit()
+
+clean_lyrics <- model_data$lyrics %>% 
+  textclean::replace_contraction() %>% 
+  str_replace_all(., "\n", " ") %>% 
+  str_replace_all(., "(\\[.*?\\])", "") %>%
+  str_squish(.) %>% 
+  gsub("([a-z])([A-Z])", "\\1 \\2", .) %>% 
+  tolower()
+
+corpus <- Corpus(VectorSource(clean_lyrics))
+
+song_dtm <- DocumentTermMatrix(corpus,
+                               control = list(weighting = function(x) {
+                                 weightTfIdf(x, normalize = TRUE)},
+                                 tolower = TRUE,
+                                 removePunctuation = TRUE,
+                                 removeNumbers = TRUE,
+                                 stopwords = TRUE,
+                                 stemming = TRUE
+                               ))
+# Important Note: 
+# This data frame is almost 2 GB.
+# For all that is good, do not print it.
+dtm_df <- as.data.frame(as.matrix(song_dtm))
+# It would be great if we could keep it as a matrix,
+# but we need to add information to it.
+
+dtm_df$genre <- as.factor(model_data$genre)
+
+colnames(dtm_df) <- make.names(names(dtm_df))
+
+dtm_df <- dtm_df[, which(duplicated(colnames(dtm_df)) == FALSE)]
+```
+
+Now, let's try something fun:
+
+```{r}
+library(mlr3)
+library(mlr3learners)
+
+# create learning task
+music_task <- TaskClassif$new(id = "lyrics", backend = dtm_df, target = "genre")
+music_task
+```
+
+```{r}
+mlr_learners$get("classif.naive_bayes")
+
+learner <- lrn("classif.naive_bayes")
+```
+
+
+```{r}
+train_set <- sample(music_task$nrow, 0.8 * music_task$nrow)
+test_set <- setdiff(seq_len(music_task$nrow), train_set)
+
+# train the model
+learner$train(music_task, row_ids = train_set)
+
+# predict data
+prediction <- learner$predict(music_task, row_ids = test_set)
+
+# calculate performance
+prediction$confusion
+```
+
+```{r}
+measure <- msr("classif.acc")
+prediction$score(measure)
+```
+
+Let's just see what might happen:
+
+```{r}
+mlr_learners$get("classif.xgboost")
+
+learner <- lrn("classif.xgboost", nthread = 7, eta = .1, nrounds = 25)
+
+learner$train(music_task, row_ids = train_set)
+
+prediction <- learner$predict(music_task, row_ids = test_set)
+
+prediction$confusion
+
+prediction$score(measure)
+```
+
+
+
+```{python}
+from nltk.corpus import stopwords
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn import metrics
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+lyrics_pd = pd.read_feather('D:/projects/UDA/data/all_lyrics.feather')
+
+# lyrics_pd = pd.read_feather('C:/Users/sberry5/Documents/teaching/UDA/data/all_lyrics.feather')
+
+lyrics_pd = lyrics_pd[{'lyrics', 'genre'}]
+
+lyrics_pd = lyrics_pd.drop_duplicates()
+
+lyrics_pd['lyrics'] = (
+  lyrics_pd.lyrics.str.replace('(\\[.*?\\])', '') 
+  .str.replace('([a-z])([A-Z])', '\\1 \\2') 
+)
+
+lyrics_pd['lyrics'] = lyrics_pd['lyrics'].astype(str)
+
+stop = stopwords.words('english')
+
+lyrics_pd['lyrcs'] = lyrics_pd['lyrics'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
+
+lyrics_pd = lyrics_pd.dropna()
+
+model_data = lyrics_pd['lyrics'].tolist()
+
+model_outcome = lyrics_pd['genre']
+
+X_train, X_test, y_train, y_test = train_test_split(model_data, 
+  model_outcome, test_size = 0.3)
+
+tfidf_vec = TfidfVectorizer()
+
+X_train_tf = tfidf_vec.fit_transform(X_train)
+
+# X_train_tf = X_train_tf.transpose()
+
+X_test_tf = tfidf_vec.transform(X_test)
+
+naive_bayes_classifier = MultinomialNB()
+naive_bayes_classifier.fit(X_train_tf, y_train)
+
+y_pred = naive_bayes_classifier.predict(X_test_tf)
+
+# compute the performance measures
+score1 = metrics.accuracy_score(y_test, y_pred)
+print("accuracy:   %0.3f" % score1)
+
+print(metrics.classification_report(y_test, y_pred))
+
+print("confusion matrix:")
+print(metrics.confusion_matrix(y_test, y_pred))
+
+```
+
+
+```{python}
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import LabelEncoder
+import xgboost as xgb
+from xgboost import XGBClassifier
+import numpy as np
+
+label_encoder = LabelEncoder()
+label_encoder = label_encoder.fit(y_train)
+label_encoded_y = label_encoder.transform(y_train)
+
+label_encoder_y_test = label_encoder.fit(y_test)
+label_encoded_y_test = label_encoder_y_test.transform(y_test)
+
+model = XGBClassifier(learning_rate = .1, use_label_encoder = False)
+model.fit(X_train_tf, label_encoded_y)
+
+y_pred = model.predict(X_test_tf)
+
+predictions = [value for value in y_pred]
+
+accuracy = accuracy_score(label_encoded_y_test, predictions)
+print("Accuracy: %.2f%%" % (accuracy * 100.0))
+```
+
