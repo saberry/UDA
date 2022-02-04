@@ -1,0 +1,184 @@
+---
+title: "Deep Neural Networks"
+description: |
+  Machine Learnings Blackest Box
+output: distill::distill_article
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, error = FALSE)
+```
+
+# Artificial Neural Networks
+
+<a href="https://towardsdatascience.com/everything-you-need-to-know-about-neural-networks-and-backpropagation-machine-learning-made-easy-e5285bc2be3a">Artificial Neural Networks</a> (ANN) are a major part of the artificial intelligence toolkit and for many good reasons.
+
+## Necessary Elements
+
+There are 4 major necessary elements needed for an ANN:
+
+1.  The inputs need to be well understood.
+
+2.  The output is well understood.
+
+3.  Experience is available.
+
+4.  It is a black box.
+
+<aside>
+The "articifical" is usually dropped, but it does help to distinguish it from the biological perspective.
+</aside>
+
+## The Basics 
+
+The set-up is the same as our typically classification problem: we have predictors (inputs) and an outcome (output). The difference, though, is in what happens between the input and the output. In an ANN, there are any number of hidden layers that help to transform the input to the output. 
+
+![](nnImage.png)
+
+This is what is known as a multilayer perceptron (MLP).
+
+In this MLP, an inputs (marked by yellow in the previous figure -- typically noted as *X*) will travel to the first hidden layer (i.e., the neuron -- marked in blue and is denoted as *W* or $\theta$), in which some calculation will be performed on that input -- this is known as the *activation function*. The activation function is split into two parts: a *combination function* and a *transfer function*. The combination function will combine (usually through a sum) the inputs into a single weighted input and the transfer function will transform the weighted values before outputting the variable into the next node. Each node is also going to receive a *bias* weight -- this is a constant weight applied to the all units in the layer, much in the way of a regression intercept beta. This process will continue until the values reach the output layer.
+
+It is worth paying some attention to the transfer function, as it can take many different forms. Some more common forms include step, linear, logistic, and hyperbolic functions. In any of these function, weighting is going to occur -- with the weighting, we should be sure to standardize our values or the largest values will dominate for many runs of the model. This notion of weighting goes hand in hand with the number of hidden layers. If our hidden layer becomes too wide, we will run the risk of overfitting the model (it will essentially learn the exact patterns found within the training data). In many cases, a single hidden layer with a hyperbolic transfer function can be enough to get reasonable results.
+
+### Typical Functions
+
+We are not lacking for activation functions, with many popular ones being easy defaults. No matter the function, the goal is always going to be deciding whether or not the node becomes activated or not (i.e., does the neuron fire or not). Step functions and linear functions work, but would cause some limitations. Instead, we should opt for some type of non-linear function. Furthermore, linear functions do not allow for learning to occur (since the weight values are a constant, there can be nothing to feed back to the optimization).
+
+#### Sigmoid
+
+A sigmoid function looks pretty familiar (remember back to logistic regression).
+
+$$S(x) = \frac{1}{1 + e^{-x}}$$
+
+```{r}
+sigmoid <- function(x) {
+  1 / (1 + exp(-x))
+}
+
+x <- seq(-5, 5, 0.01)
+
+plot(x, sigmoid(x))
+```
+
+These functions do not discretize anything, like a step function would. Instead, we get nicely bound values between 0 and 1. These functions also allow us to stack layers together, without values heading out towards infinity.
+
+#### Tangent Hyperbolic (Tanh)
+
+We can take our sigmoid function and scale it to produce a tanh function.
+
+$$\frac{2}{1+e^{-2x}} - 1$$
+
+Can be reduced to:
+
+$$2sigmoid(2x) - 1$$
+
+```{r}
+plot(x, tanh(x))
+```
+
+This function will produce outputs that are centered around 0.
+
+Both the sigmoid and tanh functions can cause a <a href="https://en.wikipedia.org/wiki/Vanishing_gradient_problem">vanishing gradient problem</a>. The vanishing gradient problem happens because of the space being compressed between 0 and 1 -- this can cause problems when a big sigmoid change causes a very small change in the output. As the *gradient* gets smaller, the weights stop changing. This will make a neural network stop learning.
+
+#### Rectified Linear Units (ReLU)
+
+ReLU serves as a really great default for many problems.
+
+$$A(x) = max(0, x)$$
+
+```{r}
+relu <- function(x) {
+  ifelse(x > 0, x, 0)
+}
+
+plot(x, relu(x))
+```
+
+Why would we ever want this type of function? In dense networks, the sigmoid and tanh functions can end up making everything fire. ReLu, on the other hand, won't activate if the values are below a certain level. As fewer nodes activate, the network gets more sparse -- this makes for an efficient learner.
+
+### Backprop
+
+ANNs have another interesting feature in that they learn from their mistakes (and they indeed know that they have made mistakes). When we reach the output from our first iteration, the model will examine the errors. Our ANN does not really want errors beyond a certain magnitude, so it will take those errors and run them back through the layers to try to re-tune them; this is a process called backpropagation (the backward propagation of errors). It does this by adjusting the weights applied throughout the nodes. As our errors are backpropogated, the ANN will change a weight and see whether it increases or reduces the error -- it will seek to reduce the error, but not to eliminate the error (this would lead to overfitting!). This is the idea behind the *cost* function (loss is the same thing and there is a shift towards using loss over cost). The goal is to provide some type of minimization to whatever our cost function might be (there are many different types of cost functions).
+
+This is a point, along with the previous point about the number of layers, is one that bears repeating. We want our ANN to be flexible to predicting new data; we do not want our ANN to learn everything about the training data. If your model underperforms on the test set, then you likely have overfit the ANN with too many hidden layers. 
+
+There are several different types of neural networks and we are going to stick with this simple example for now, as it will work for most situations. When we start getting into images, we will see some of the other types of neural networks.
+
+For an in-depth treatment of the background calculations, <a href="https://arxiv.org/pdf/1802.01528.pdf">Parr and Howard</a> is tough to beat.
+
+## Text Classification
+
+```{python}
+from nltk.corpus import stopwords
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn import metrics
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+# lyrics_pd = pd.read_feather('D:/projects/UDA/data/all_lyrics.feather')
+lyrics_pd = pd.read_feather('C:/Users/sberry5/Documents/teaching/UDA/data/all_lyrics.feather')
+```
+
+
+```{python}
+import pandas as pd
+from sklearn.model_selection import train_test_split
+
+raw_data_path = '/content/drive/My Drive/lstm/Data/news.csv'
+destination_folder = '/content/drive/My Drive/lstm/Data'
+
+train_test_ratio = 0.10
+train_valid_ratio = 0.80
+
+first_n_words = 200
+
+def trim_string(x):
+    x = x.split(maxsplit=first_n_words)
+    x = ' '.join(x[:first_n_words])
+    return x
+```
+
+
+```{python}
+# Read raw data
+df_raw = pd.read_csv(raw_data_path)
+
+# Prepare columns
+df_raw['label'] = (df_raw['label'] == 'FAKE').astype('int')
+df_raw['titletext'] = df_raw['title'] + ". " + df_raw['text']
+df_raw = df_raw.reindex(columns=['label', 'title', 'text', 'titletext'])
+
+# Drop rows with empty text
+df_raw.drop( df_raw[df_raw.text.str.len() < 5].index, inplace=True)
+
+# Trim text and titletext to first_n_words
+df_raw['text'] = df_raw['text'].apply(trim_string)
+df_raw['titletext'] = df_raw['titletext'].apply(trim_string) 
+
+# Split according to label
+df_real = df_raw[df_raw['label'] == 0]
+df_fake = df_raw[df_raw['label'] == 1]
+
+# Train-test split
+df_real_full_train, df_real_test = train_test_split(df_real, train_size = train_test_ratio, random_state = 1)
+df_fake_full_train, df_fake_test = train_test_split(df_fake, train_size = train_test_ratio, random_state = 1)
+
+# Train-valid split
+df_real_train, df_real_valid = train_test_split(df_real_full_train, train_size = train_valid_ratio, random_state = 1)
+df_fake_train, df_fake_valid = train_test_split(df_fake_full_train, train_size = train_valid_ratio, random_state = 1)
+
+# Concatenate splits of different labels
+df_train = pd.concat([df_real_train, df_fake_train], ignore_index=True, sort=False)
+df_valid = pd.concat([df_real_valid, df_fake_valid], ignore_index=True, sort=False)
+df_test = pd.concat([df_real_test, df_fake_test], ignore_index=True, sort=False)
+
+# Write preprocessed data
+df_train.to_csv(destination_folder + '/train.csv', index=False)
+df_valid.to_csv(destination_folder + '/valid.csv', index=False)
+df_test.to_csv(destination_folder + '/test.csv', index=False)
+```
+
