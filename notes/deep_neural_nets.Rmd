@@ -109,11 +109,9 @@ For an in-depth treatment of the background calculations, <a href="https://arxiv
 
 ## Deep Convolutional Neural Networks
 
-While we learned a bit about neural networks, the simple perceptron model is somewhat old news. Given the increase in computational power, new neural networks have become the go to model for speech and image classification.  
-
 These models are particularly well-suited for images, but can be used on just about regression or classification problem that you might encounter. 
 
-From a conceptual standpoint, they are not world away from what we previously saw. We have an input that gets passed through layers, weights and computations are applied through the layers, output is achieved and the system starts again. The biggest difference between these deep nets and what we saw a few weeks ago is in the complexity. We can have many hidden layers and the layers can be incredibly deep.
+From a conceptual standpoint, they are not world away from MLPs. We have an input that gets passed through layers, weights and computations are applied through the layers, output is achieved and the system starts again. The biggest difference between these different neural networks is in complexity. We can have many hidden layers and the layers can be incredibly deep.
 
 
 ![](convoHard.png)
@@ -130,4 +128,4 @@ The ReLU activation is probably what you will most commonly see for these models
 
 The softmax function we see at the end is just providing the mapping of the output to class probability distribution.
 
-The size of the boxes in both figures help to illustrate an important point: the first layers extract very high-level features (just like the features we saw last time). They are picking up on things like lines, colors, and course shapes. As we pass into the next layers, the feature map becomes smaller -- here, we are picking up on small details within the images. If we use a pretrained model, we can freeze those top layers; this will help to keep the broad generalizations from the models.
+The size of the boxes in both figures help to illustrate an important point: the first layers extract very high-level features (just like the features we saw last time). They are picking up on things like lines, colors, and course shapes. As we pass into the next layers, the feature map becomes smaller. If we use a pretrained model, we can freeze those top layers; this will help to keep the broad generalizations from the models.
