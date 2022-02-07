@@ -107,78 +107,27 @@ There are several different types of neural networks and we are going to stick w
 
 For an in-depth treatment of the background calculations, <a href="https://arxiv.org/pdf/1802.01528.pdf">Parr and Howard</a> is tough to beat.
 
-## Text Classification
+## Deep Convolutional Neural Networks
 
-```{python}
-from nltk.corpus import stopwords
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
-from sklearn.naive_bayes import MultinomialNB
-from sklearn import metrics
+While we learned a bit about neural networks, the simple perceptron model is somewhat old news. Given the increase in computational power, new neural networks have become the go to model for speech and image classification.  
 
-from sklearn.feature_extraction.text import TfidfVectorizer
+These models are particularly well-suited for images, but can be used on just about regression or classification problem that you might encounter. 
 
-# lyrics_pd = pd.read_feather('D:/projects/UDA/data/all_lyrics.feather')
-lyrics_pd = pd.read_feather('C:/Users/sberry5/Documents/teaching/UDA/data/all_lyrics.feather')
-```
+From a conceptual standpoint, they are not world away from what we previously saw. We have an input that gets passed through layers, weights and computations are applied through the layers, output is achieved and the system starts again. The biggest difference between these deep nets and what we saw a few weeks ago is in the complexity. We can have many hidden layers and the layers can be incredibly deep.
 
 
-```{python}
-import pandas as pd
-from sklearn.model_selection import train_test_split
+![](convoHard.png)
 
-raw_data_path = '/content/drive/My Drive/lstm/Data/news.csv'
-destination_folder = '/content/drive/My Drive/lstm/Data'
+Here is the same diagram, but with a clearer depiction.
 
-train_test_ratio = 0.10
-train_valid_ratio = 0.80
+![](convoSimple.jpeg)
 
-first_n_words = 200
+Here we are breaking image features down that get passed into the convolutional layer (typically with a Rectified Linear Unit activation).
 
-def trim_string(x):
-    x = x.split(maxsplit=first_n_words)
-    x = ' '.join(x[:first_n_words])
-    return x
-```
+<aside>
+The ReLU activation is probably what you will most commonly see for these models. They are flexible, will deal with interactions and nonlinearities, and provide consistently great results.
+</aside>
 
+The softmax function we see at the end is just providing the mapping of the output to class probability distribution.
 
-```{python}
-# Read raw data
-df_raw = pd.read_csv(raw_data_path)
-
-# Prepare columns
-df_raw['label'] = (df_raw['label'] == 'FAKE').astype('int')
-df_raw['titletext'] = df_raw['title'] + ". " + df_raw['text']
-df_raw = df_raw.reindex(columns=['label', 'title', 'text', 'titletext'])
-
-# Drop rows with empty text
-df_raw.drop( df_raw[df_raw.text.str.len() < 5].index, inplace=True)
-
-# Trim text and titletext to first_n_words
-df_raw['text'] = df_raw['text'].apply(trim_string)
-df_raw['titletext'] = df_raw['titletext'].apply(trim_string) 
-
-# Split according to label
-df_real = df_raw[df_raw['label'] == 0]
-df_fake = df_raw[df_raw['label'] == 1]
-
-# Train-test split
-df_real_full_train, df_real_test = train_test_split(df_real, train_size = train_test_ratio, random_state = 1)
-df_fake_full_train, df_fake_test = train_test_split(df_fake, train_size = train_test_ratio, random_state = 1)
-
-# Train-valid split
-df_real_train, df_real_valid = train_test_split(df_real_full_train, train_size = train_valid_ratio, random_state = 1)
-df_fake_train, df_fake_valid = train_test_split(df_fake_full_train, train_size = train_valid_ratio, random_state = 1)
-
-# Concatenate splits of different labels
-df_train = pd.concat([df_real_train, df_fake_train], ignore_index=True, sort=False)
-df_valid = pd.concat([df_real_valid, df_fake_valid], ignore_index=True, sort=False)
-df_test = pd.concat([df_real_test, df_fake_test], ignore_index=True, sort=False)
-
-# Write preprocessed data
-df_train.to_csv(destination_folder + '/train.csv', index=False)
-df_valid.to_csv(destination_folder + '/valid.csv', index=False)
-df_test.to_csv(destination_folder + '/test.csv', index=False)
-```
-
+The size of the boxes in both figures help to illustrate an important point: the first layers extract very high-level features (just like the features we saw last time). They are picking up on things like lines, colors, and course shapes. As we pass into the next layers, the feature map becomes smaller -- here, we are picking up on small details within the images. If we use a pretrained model, we can freeze those top layers; this will help to keep the broad generalizations from the models.
