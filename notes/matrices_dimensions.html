@@ -1564,7 +1564,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 [1,]  120   80
 [2,]   80  120</code></pre>
 </div>
-<p>The only reason this works is because our dimensions are <em>conformable</em>. The original matrix is 4 by 2 and the transpose matrix is 2 by 4. As long as those outside dimenions match – 2 and 2 – we can use those objects for multiplication and addition. You will notice that these two matrices yielded a 2 by 2 matrix. Whatever our outside numbers are will provide the dimensions for the final matrix!</p>
+<p>The only reason this works is because our dimensions are <em>conformable</em>. The original matrix is 4 by 2 and the transpose matrix is 2 by 4. As long as those <s>outside</s> inside dimensions match – 2 and 2 – we can use those objects for multiplication and addition. You will notice that these two matrices yielded a 2 by 2 matrix. Whatever our outside numbers are will provide the dimensions for the final matrix!</p>
 <p>Whether you knew it or not, ever stat/ML method is full of matrix algebra (and optimization).</p>
 <p>Let’s see something that you already know:</p>
 <div class="layout-chunk" data-layout="l-body">
@@ -2413,21 +2413,21 @@ response          hot-hard-rock pop rock
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="co"># compute the performance measures</span></span>
 <span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>score1 <span class="op">=</span> metrics.accuracy_score(y_test, y_pred)</span>
 <span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;accuracy:   </span><span class="sc">%0.3f</span><span class="st">&quot;</span> <span class="op">%</span> score1)</span></code></pre></div>
-<pre><code>accuracy:   0.450</code></pre>
+<pre><code>accuracy:   0.409</code></pre>
 <div class="sourceCode" id="cb40"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(metrics.classification_report(y_test, y_pred))</span></code></pre></div>
 <pre><code>                 precision    recall  f1-score   support
 
-      adult-pop       0.00      0.00      0.00       108
-      christian       0.90      0.46      0.61       172
-        country       0.47      0.87      0.61       180
-hot-alternative       0.00      0.00      0.00        19
-  hot-hard-rock       0.00      0.00      0.00        26
-            pop       0.00      0.00      0.00       128
-           rock       0.33      0.75      0.45       165
+      adult-pop       0.00      0.00      0.00       107
+      christian       0.81      0.62      0.70       164
+        country       0.31      0.95      0.46       171
+hot-alternative       0.00      0.00      0.00        22
+  hot-hard-rock       0.00      0.00      0.00        23
+            pop       0.00      0.00      0.00       120
+           rock       0.45      0.32      0.38       191
 
-       accuracy                           0.45       798
-      macro avg       0.24      0.30      0.24       798
-   weighted avg       0.37      0.45      0.36       798
+       accuracy                           0.41       798
+      macro avg       0.22      0.27      0.22       798
+   weighted avg       0.34      0.41      0.33       798
 
 
 C:\Users\sethb\AppData\Local\r-miniconda\envs\r-reticulate\lib\site-packages\sklearn\metrics\_classification.py:1318: UndefinedMetricWarning: Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
@@ -2439,13 +2439,13 @@ C:\Users\sethb\AppData\Local\r-miniconda\envs\r-reticulate\lib\site-packages\skl
 <div class="sourceCode" id="cb42"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;confusion matrix:&quot;</span>)</span></code></pre></div>
 <pre><code>confusion matrix:</code></pre>
 <div class="sourceCode" id="cb44"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(metrics.confusion_matrix(y_test, y_pred))</span></code></pre></div>
-<pre><code>[[  0   1  36   0   0   0  71]
- [  0  79  28   0   0   0  65]
- [  0   1 157   0   0   0  22]
- [  0   0   9   0   0   0  10]
- [  0   1   7   0   0   0  18]
- [  0   1  58   0   0   0  69]
- [  0   5  37   0   0   0 123]]</code></pre>
+<pre><code>[[  0   2  80   0   0   0  25]
+ [  0 101  48   0   0   0  15]
+ [  0   5 163   0   0   0   3]
+ [  0   0  17   0   0   0   5]
+ [  0   2  10   0   0   0  11]
+ [  0   1 101   0   0   0  18]
+ [  0  14 115   0   0   0  62]]</code></pre>
 </div>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode" id="cb46"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> accuracy_score</span>
@@ -2463,7 +2463,7 @@ C:\Users\sethb\AppData\Local\r-miniconda\envs\r-reticulate\lib\site-packages\skl
 <span id="cb46-13"><a href="#cb46-13" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb46-14"><a href="#cb46-14" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> XGBClassifier(learning_rate <span class="op">=</span> <span class="fl">.1</span>, use_label_encoder <span class="op">=</span> <span class="va">False</span>)</span>
 <span id="cb46-15"><a href="#cb46-15" aria-hidden="true" tabindex="-1"></a>model.fit(X_train_tf, label_encoded_y)</span></code></pre></div>
-<pre><code>[14:22:43] WARNING: C:/Users/Administrator/workspace/xgboost-win64_release_1.5.1/src/learner.cc:1115: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective &#39;multi:softprob&#39; was changed from &#39;merror&#39; to &#39;mlogloss&#39;. Explicitly set eval_metric if you&#39;d like to restore the old behavior.
+<pre><code>[18:33:52] WARNING: C:/Users/Administrator/workspace/xgboost-win64_release_1.5.1/src/learner.cc:1115: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective &#39;multi:softprob&#39; was changed from &#39;merror&#39; to &#39;mlogloss&#39;. Explicitly set eval_metric if you&#39;d like to restore the old behavior.
 XGBClassifier(base_score=0.5, booster=&#39;gbtree&#39;, colsample_bylevel=1,
               colsample_bynode=1, colsample_bytree=1, enable_categorical=False,
               gamma=0, gpu_id=-1, importance_type=None,
@@ -2480,7 +2480,7 @@ XGBClassifier(base_score=0.5, booster=&#39;gbtree&#39;, colsample_bylevel=1,
 <span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a>accuracy <span class="op">=</span> accuracy_score(label_encoded_y_test, predictions)</span>
 <span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;Accuracy: </span><span class="sc">%.2f%%</span><span class="st">&quot;</span> <span class="op">%</span> (accuracy <span class="op">*</span> <span class="fl">100.0</span>))</span></code></pre></div>
-<pre><code>Accuracy: 50.13%</code></pre>
+<pre><code>Accuracy: 50.75%</code></pre>
 </div>
 <div class="sourceCode" id="cb50"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <!--radix_placeholder_article_footer-->

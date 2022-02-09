@@ -68,7 +68,7 @@ But we cannot perform a matrix multiplication on this. What is the differences b
 t(matrix_1) %*% matrix_1
 ```
 
-The only reason this works is because our dimensions are *conformable*. The original matrix is 4 by 2 and the transpose matrix is 2 by 4. As long as those outside dimenions match -- 2 and 2 -- we can use those objects for multiplication and addition. You will notice that these two matrices yielded a 2 by 2 matrix. Whatever our outside numbers are will provide the dimensions for the final matrix!
+The only reason this works is because our dimensions are *conformable*. The original matrix is 4 by 2 and the transpose matrix is 2 by 4. As long as those <s>outside</s> inside dimensions match -- 2 and 2 -- we can use those objects for multiplication and addition. You will notice that these two matrices yielded a 2 by 2 matrix. Whatever our outside numbers are will provide the dimensions for the final matrix!
 
 Whether you knew it or not, ever stat/ML method is full of matrix algebra (and optimization).
 

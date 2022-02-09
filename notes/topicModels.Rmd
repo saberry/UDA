@@ -168,25 +168,64 @@ Just like our sentiment analysis, there is a fair chunk of cleaning to do. The `
 We are going to be constructing what are called <a href="https://cran.r-project.org/web/packages/stm/vignettes/stmVignette.pdf">structural topic models</a>.
 
 ```{r}
+library(dplyr)
+library(quanteda)
+library(stringr)
 library(stm)
+library(tm)
 
-set.seed(1001)
+load("D:/projects/UDA/data/all_lyrics.RData")
 
-holdoutRows = sample(1:nrow(cleanLyrics), 100, replace = FALSE)
+model_data <- all_lyrics_info[duplicated(all_lyrics_info$lyric_link) == FALSE, 
+                              c("lyrics", "genre", "week")] %>% 
+  na.omit()
 
-lyricText = textProcessor(documents = cleanLyrics$text[-c(holdoutRows)], 
-                          metadata = cleanLyrics[-c(holdoutRows), ], 
-                          stem = FALSE)
+Encoding(model_data$lyrics) <- "UTF-8"
 
-lyricPrep = prepDocuments(documents = lyricText$documents, 
-                               vocab = lyricText$vocab,
-                               meta = lyricText$meta)
+rm(all_lyrics, all_lyrics_info)
+
+model_data$week <- stringr::str_extract(model_data$week, "\\d{4}")
+
+colnames(model_data)[colnames(model_data) == "week"] <- "year"
+
+model_data$lyrics <- gsub("\\d+Embed.*$", "", model_data$lyrics)
+
+model_data$lyrics <- model_data$lyrics %>% 
+  textclean::replace_contraction() %>% 
+  str_replace_all(., "\n", " ") %>% 
+  str_replace_all(., "(\\[.*?\\])", "") %>% 
+  str_squish() %>% 
+  gsub("([a-z])([A-Z])", "\\1 \\2", .) %>% 
+  tolower() %>% 
+  textstem::lemmatize_strings(.)
+
+# creates the corpus with document variables except for the "text"
+lyric_corpus <- corpus(model_data, text_field = "lyrics")
+
+lyric_token <- tokens(lyric_corpus, 
+                      remove_punct = TRUE, 
+                      remove_symbols = TRUE,
+                      remove_numbers = TRUE)
+
+lyric_dfm <- dfm(lyric_token)
+
+lyric_dfm <- dfm_trim(lyric_dfm, sparsity = 0.990)
+
+lyric_stm <- convert(lyric_dfm, to = "stm")
+
+docs_stm <- lyric_stm$documents 
+vocab_stm <- lyric_stm$vocab    
+meta_stm <- lyric_stm$meta
+
+lyricPrep <- prepDocuments(documents = docs_stm, 
+                           vocab = vocab_stm,
+                           meta = meta_stm)
 ```
 
-The stm package has some pretty nice facilities for determining a number of topics:
+The stm package has some pretty nice facilities for determining a number of topics. Be warned, though, that this takes a long time to run. Mac users can use the `cores` arguement, but Windows users will need to do something a little craftier.
 
 ```{r, eval=FALSE}
-kTest = searchK(documents = lyricPrep$documents, 
+kTest <- searchK(documents = lyricPrep$documents, 
              vocab = lyricPrep$vocab, 
              K = c(3, 4, 5, 10, 20), verbose = FALSE)
 
@@ -196,19 +235,19 @@ plot(kTest)
 ```{r, echo = FALSE}
 if(Sys.info()["sysname"] == "Darwin") {
   load("~/courses/unstructured/data/kTest.RData")
-} else load("C:/Users/sberry5/Documents/teaching/courses/unstructured/data/kTest.RData")
+} else load("D:/projects/UDA/data/ktest.RData")
 
 plot(kTest)
 ```
 
-The 4 plots that are returned are going to try to help us determine the best number of topics to take. I like to focus on semantic coherence (how well the words hang together -- computed from taking a conditional probability score from frequent words) and the residuals. We want to have low residual and high semantic coherence. The residuals definitely take a sharp dive as we increase K. If we consider one of the major assumptions of LDA, we could almost always guess that we would need a great number of topics (i.e., if every topic that has ever existed, existed before writing, then we could have a huge numebr of topics). Our coherence seems to do pretty well with some of the lower numbers (not entirely surprising); coherence is essentially a measure of human interpretability. With all of these together, we can settle on 5 topics for our subsequent analyses. Just for your information, held-out likelihood can be characterized by how surprised the model would be with new words (it is often called perplexity). Lower bound relates to the lower bound of the marginal likelihood.
+The 4 plots that are returned are going to try to help us determine the best number of topics to take. I like to focus on semantic coherence (how well the words hang together -- computed from taking a conditional probability score from frequent words) and the residuals. We want to have low residual and high semantic coherence. The residuals definitely take a sharp dive as we increase K. If we consider one of the major assumptions of LDA, we could almost always guess that we would need a great number of topics (i.e., if every topic that has ever existed, existed before writing, then we could have a huge number of topics). Our coherence seems to do pretty well with some of the lower numbers (not entirely surprising); coherence is essentially a measure of human interpretability. With all of these together, we can settle on 5 topics for our subsequent analyses. Just for your information, held-out likelihood can be characterized by how surprised the model would be with new words (it is often called perplexity). Lower bound relates to the lower bound of the marginal likelihood.
 
 It is worthwhile to note that we can also do model selection with the stm package, but that is some work that will be best done if you want some additional playtime.
 
 With our 5 topics, we can start our actual model:
 
 ```{r}
-topics5 = stm(documents = lyricPrep$documents, 
+topics5 <- stm(documents = lyricPrep$documents, 
              vocab = lyricPrep$vocab, seed = 1001,
              K = 5, verbose = FALSE)
 ```
@@ -272,27 +311,55 @@ lyricPrep$documents[[3]]
 lyricPrep$vocab[lyricPrep$documents[[3]][1, ]]
 ```
 
-While the previous methods would certainly allow us to classify new document, they do work best for informational retrieval. There are times that we don't want to train a new model (and go through the step of determining a topic number), but instread just want to apply our trained model on new data. Topic models, on the other hand, are great for predicting topic probabilities for unseen document.
+Let's return to our prediction task from last time:
 
 ```{r}
-newLyricText = textProcessor(documents = cleanLyrics$text[holdoutRows], 
-                          metadata = cleanLyrics[holdoutRows, ], 
-                          stem = FALSE)
+library(mlr3)
+library(mlr3learners)
 
-newLyricCorp = alignCorpus(new = newLyricText, old.vocab = topics5$vocab)
+dfm_df <- convert(lyric_dfm, to = "data.frame")
 
-newLyricsFitted = fitNewDocuments(model = topics5, documents = newLyricCorp$documents, 
-                newData = newLyricCorp$meta, origData = lyricPrep$meta)
+model_data <- as.data.frame(cbind(topics5$theta, meta_stm$genre))
+
+colnames(model_data) <- c(paste0("topic_", 1:5), "genre")
+
+topic_cols <- which(grepl("topic", colnames(model_data)))
+
+model_data[, topic_cols] <- apply(model_data[, topic_cols], 2, as.numeric)
+
+model_data$genre <- as.factor(model_data$genre)
+
+# create learning task
+music_task <- TaskClassif$new(id = "lyrics", backend = model_data, target = "genre")
+music_task
+
+train_set <- sample(music_task$nrow, 0.8 * music_task$nrow)
+test_set <- setdiff(seq_len(music_task$nrow), train_set)
+
+
+mlr_learners$get("classif.xgboost")
+
+learner <- lrn("classif.xgboost", nthread = 7, eta = .1, nrounds = 25)
+
+learner$train(music_task, row_ids = train_set)
+
+prediction <- learner$predict(music_task, row_ids = test_set)
+
+prediction$confusion
+measure <- msr("classif.acc")
+prediction$score(measure)
+
 ```
-
-This will return each documents theta values.
-
 
 Topic models can be extended to include covariates, where we are examining how much each topic contributes to a document given some other data.
 
 This is where some real explanatory power comes into play!
 
 ```{r}
+if(Sys.info()["sysname"] == "Darwin") {
+  load("~/courses/unstructured/data/allLyricsDF.RData")
+} else load("D:/projects/courses/unstructured/data/allLyricsDF.RData")
+
 cleanLyrics = allLyricsDF %>%
   filter(stringDistance < .1) %>% 
   dplyr::select(lyrics, returnedArtistName, returnedSong, date) %>%
@@ -302,25 +369,26 @@ cleanLyrics = allLyricsDF %>%
          text = str_squish(text), 
          text = gsub("([a-z])([A-Z])", "\\1 \\2", text), 
          text = tolower(text), 
-         text = removeWords(text, c("’", stopwords(kind = "en"))), 
+         text = removeWords(text, c("’", tm::stopwords(kind = "en"))), 
          text = removePunctuation(text), 
          text = removeNumbers(text),
          text = textstem::lemmatize_strings(text), 
-         year = lubridate::year(date))
+         year = as.numeric(stringr::str_extract(date, "\\d{4}"))) %>% 
+  as.data.frame()
 
 predictorText <- textProcessor(documents = cleanLyrics$text, 
                           metadata = cleanLyrics, 
                           stem = FALSE)
 
-lyricPrep = prepDocuments(documents = predictorText$documents, 
+lyricPrep <- prepDocuments(documents = predictorText$documents, 
                                vocab = predictorText$vocab,
                                meta = predictorText$meta)
 
-topicPredictor = stm(documents = lyricPrep$documents,
+topicPredictor <- stm(documents = lyricPrep$documents,
              vocab = lyricPrep$vocab, prevalence = ~ year,
              data = lyricPrep$meta, K = 5, verbose = FALSE)
 
-yearEffect = estimateEffect(1:5 ~ year, stmobj = topicPredictor,
+yearEffect <- estimateEffect(1:5 ~ year, stmobj = topicPredictor,
                metadata = lyricPrep$meta)
 
 summary(yearEffect, topics = c(1:5))
@@ -341,18 +409,4 @@ plot.estimateEffect(yearEffect, "year", method = "continuous",
                     model = topicPredictor, topics = 5, labeltype = "frex")
 ```
 
-
-<!-- ```{r} -->
-<!-- set.seed(1001) -->
-
-<!-- topicContent = stm(documents = executionsPrep$documents,  -->
-<!--              vocab = executionsPrep$vocab, content = ~ codefsYes, -->
-<!--              data = executionsPrep$meta, K = 5, verbose = FALSE) -->
-
-<!-- labelTopics(topicContent) -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- plot(topicContent, type = "perspectives", topics = 1) -->
-<!-- ``` -->
 
