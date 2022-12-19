@@ -1,0 +1,119 @@
+---
+title: "Pipelines"
+format: html
+editor: visual
+---
+
+## Why?
+
+## How?
+
+### R
+
+```{r}
+library(iml)
+library(mlr3)
+library(mlr3learners)
+library(mlr3pipelines)
+library(mlr3tuning)
+library(mlr3viz)
+
+job_data <- data.table::fread("data/job_data.csv")
+
+task <- as_task_classif(
+  x = job_data, 
+  target = "separatedNY", 
+  id = "job_task"
+)
+
+task$select(cols = setdiff(task$feature_names, c("monthsToSeparate")))
+
+splits <- partition(task, ratio = .8)
+
+learner <- lrn("classif.xgboost", predict_type = "prob")
+
+trained <- learner$train(task, splits$train)
+
+pred <- trained$predict(task, splits$test)
+
+mlr3measures::acc(pred$data$truth, pred$data$response, positive = "1")
+mlr3measures::bacc(pred$data$truth, pred$data$response, positive = "1")
+mlr3measures::mcc(pred$data$truth, pred$data$response, positive = "1")
+mlr3measures::auc(pred$data$truth, pred$data$prob[, 1], positive = "1")
+
+pred$confusion
+
+autoplot(pred, type = "roc")
+
+model <- Predictor$new(
+  learner, 
+  data = job_data[splits$test, -"separatedNY"], 
+  y = job_data[splits$test, "separatedNY"])
+
+effect <- FeatureEffects$new(model, method = "ale")
+
+plot(effect, features = c("currentSalary"))
+
+x.interest <- data.frame(job_data[1:10, ])
+shapley <- Shapley$new(model, x.interest = x.interest)
+plot(shapley)
+
+effect <- FeatureImp$new(model, loss = "ce")
+effect$plot(features = "currentSalary")
+
+learner$param_set
+
+# Now we can get crazy:
+
+learner <- lrn("classif.xgboost", 
+              predict_type = "prob",
+              eta = to_tune(0, 1),
+              nrounds = to_tune(1, 10), 
+              max_depth = to_tune(1, 10)
+              
+)
+
+resampling <- rsmp("repeated_cv", repeats = 1, folds = 1L)$instantiate(task)
+
+measures <- msrs(c("classif.acc", "classif.auc"))
+
+instance <- ti(
+  task = task,
+  learner = learner,
+  resampling = resampling,
+  measures = measures,
+  terminator = trm("evals", n_evals = 2)
+)
+
+instance
+
+tuner <- tnr("grid_search", resolution = 5, batch_size = 4)
+
+tuner
+
+tuner$optimize(instance)
+
+as.data.table(instance$archive)
+
+instance$result
+
+learner$param_set$values <- instance$result_learner_param_vals[[1]]
+
+
+res <- resample(task, learner, resampling, store_models = TRUE)
+
+res$predictions()
+
+res$score(msrs(c("classif.acc", "classif.auc")))
+
+task$missings()
+
+po_indicator <- po(
+  "missind",
+  affect_columns = selector_type(c("numeric", "integer")), 
+  type = "numeric"
+)
+```
+
+
+### Python
