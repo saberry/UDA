@@ -1,0 +1,21 @@
+---
+title: "Unstructured"
+author: "Homework 2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# The Data
+
+You already have all of the data that you need! You will be returning to the WWE earnings call transcripts and the dates around those calls. Now would be an excellent time to use the load/save functions in R (pickle is what the Python folks would use, but I think I would opt for multiple feather files instead) so that you don't have to redo all of that work within this document.
+
+# Step 1
+
+Perform sentiment analyses on the call text. These are earnings calls -- quarterly calls between company representatives and analyst-type people. Choose two any two methods of performing sentiment analysis. Compare them and discuss why you might choose one over the other.
+
+# Step 2
+
+You have sentiment values, stock prices, and television buyrates. Given all of this data, what trends do you see? Discuss what you found and whether or not it is meaningful. 
