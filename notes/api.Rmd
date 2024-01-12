@@ -18,7 +18,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 You will need the following packages:
 
 ```{r}
-library(httr)
+library(httr2)
 
 library(rvest)
 ```
@@ -34,9 +34,10 @@ The most basic of all APIs will allow us to pass information into a URL string a
 A common task to encounter is to take a city and return the coordinates. We will check out more elaborate ways of performing this task with Google, but Zippopotam.us gives us something really easy:
 
 ```{r}
-library(httr)
+library(httr2)
 
-GET("http://www.api.zippopotam.us/us/61949")
+request("https://api.zippopotam.us/us/61949") %>%
+  req_perform()
 ```
 
 All we need to do to construct this API call to GET is to append a zip code at the end of the link. Super easy and as easy as an API can get.
@@ -44,37 +45,32 @@ All we need to do to construct this API call to GET is to append a zip code at t
 We see that we got a 200 status, but not much else. We need the data out of this request, which leads us, undoubtedly, to JavaScript Object Notation (JSON). Let's see how this works: 
 
 ```{r}
-zipRequest <- GET("http://api.zippopotam.us/us/il/redmon")
+zipRequest <- request("https://api.zippopotam.us/us/il/redmon") %>%
+  req_perform()
 
 str(zipRequest)
 
-content(zipRequest, as = "raw")
+resp_body_raw(zipRequest)
 ```
 
 This is the raw request in byte codes -- no thanks.
 
 ```{r}
-content(zipRequest, as = "text")
+resp_body_string(zipRequest)
 ```
 
 Depending upon the situation, you might need to return the text output and wrangle it yourself. Fortunately, we don't need to do that.
 
 ```{r}
-content(zipRequest, as = "parsed")
+resp_body_json(zipRequest)
 ```
 
 The majority of APIs are going to return JSON objects (not all, but definitely most). Why? Mostly because it is the best way to deal with data on the web. It makes our life just a little bit harder, but it is not the worst thing that we will encounter. It does become difficult, though, when the JSON is malformed. 
 
-```{r}
-zipParsed <- content(zipRequest, as = "parsed")
-
-zipParsed
-```
-
 That is a little clunky, so let's look at another alternative:
 
 ```{r}
-zipText <- content(zipRequest, as = "text")
+zipText <- resp_body_string(zipRequest)
 
 jsonlite::fromJSON(zipText, simplifyDataFrame = TRUE)
 ```
@@ -132,7 +128,6 @@ your_name = ""
 complete_link = base_link + your_name
 ```
 
-
 ### The Hard Road
 
 If you want a challenge, see how many stars are in your sphere of causality (lightcone). If a single point of light was emitted at the time of your birth, how many stars has that light reached? This is a bit of a challenge, because you will need to parse the XML from the request.
@@ -182,9 +177,11 @@ av_symbol <- "GOOGL"
 
 av_link <- glue::glue("https://www.alphavantage.co/query?function=TIME_SERIES_WEEKLY&symbol={av_symbol}&apikey={av_K}")
 
-av_request <- GET(av_link)
+av_request <- request(av_link) %>%
+  req_perform() %>%
+  resp_body_string()
 
-av_read <- RJSONIO::fromJSON(content(av_request, as = "text"))
+av_read <- RJSONIO::fromJSON(av_request)
 
 av_series <- av_read$`Weekly Time Series`
 
@@ -242,9 +239,11 @@ av_link <- paste(base_link,
                          "&apikey=", av_K, 
                          sep = "")
 
-av_request <- GET(av_link)
+av_request <- request(av_link) %>%
+  req_perform() %>%
+  resp_body_string()
 
-av_parsed <- read.delim(text = content(av_request, as = "text"), sep = ",")
+av_parsed <- read.delim(text = av_request, sep = ",")
 ```
 
 Revise this to return more points -- you can focus on `outputsize` and `interval.`
@@ -254,13 +253,14 @@ There is a lot of cool information in this API, but as you continue messing with
 There are APIs, though, that do not really limit you. Let's look at the Census API. It has everything you can imagine (free geocoding -- oh yeah), but it will make you work for it. 
 
 ```{r}
-oldHouse <- GET("https://geocoding.geo.census.gov/geocoder/locations/address?street=107+East+Street&city=redmon&state=IL&zip=61949&benchmark=Public_AR_Current&format=json")
+oldHouse <- request("https://geocoding.geo.census.gov/geocoder/locations/address?street=107+East+Street&city=redmon&state=IL&zip=61949&benchmark=Public_AR_Current&format=json") %>%
+  req_perform() %>%
+  resp_body_json()
 
-content(oldHouse, as = "parsed")
+oldHouse
 ```
 
 Excellent! And easy. However, getting into the census API is really difficult, mostly because you need to know a lot about the census. If you need to use the census, I would just use the censusapi R package. 
-
 
 Now that we can do a single call, let's look at some batch geocoding. We need to dig into the documentation just a little bit: https://geocoding.geo.census.gov/geocoder/Geocoding_Services_API.html
 
@@ -286,51 +286,39 @@ Let's go with what the documentation tells us and try something out. Since the d
 ```{r}
 batchEndpoint <- "https://geocoding.geo.census.gov/geocoder/locations/addressbatch"
 
-POST(batchEndpoint,
-  body = list(addressFile = upload_file("~/courses/addresses.csv"), 
-              benchmark = "DatasetType_Public_AR"),
-  encode = "multipart",
-  verbose())
+request(batchEndpoint) %>%
+  req_body_multipart(addressFile = httr::upload_file("./addresses.csv"), 
+              benchmark = "DatasetType_Public_AR_Current") %>%
+  req_perform(verbosity = 3)
 ```
+
 
 While testing, I would recommend that you keep that verbose function in -- it will be a good start to telling you what might be going wrong.
 
 Our Status: 400 means that it is a bad request and we can work with that. Let's think back to the documentation, read some more, and try something else out:
 
 ```{r}
-POST(batchEndpoint,
-  body = list(
-    addressFile = upload_file("./addresses.csv")
-  ),
-  add_headers(
-              "benchmark" = "Public_AR_Current"),
-  verbose()
-)
+request(batchEndpoint) %>%
+  req_body_multipart(addressFile = httr::upload_file("./addresses.csv")) %>%
+  req_headers("benchmark" = "Public_AR_Current") %>%
+  req_perform(verbosity = 2)
 ```
-
-Awesome! Status: 500 means we have an internal server error. Our request might have gone to the proper place, but wasn't able to be handled how it was written.
 
 We have information split up over the head and the body, so let's try moving all of it into the body:
 
 ```{r}
-POST(batchEndpoint,
-     body = list(addressFile = upload_file("./addresses.csv"), 
-                 benchmark = "Public_AR_Current"),
-     encode = "multipart",
-     verbose())
+
 ```
 
 That is a victory! Let's try this out now:
 
 ```{r}
-request_body <- list(addressFile = upload_file("./addresses.csv"), 
-                                      benchmark = "Public_AR_Current")
+geocodedAddresses <- request(batchEndpoint) %>%
+  req_body_multipart(addressFile = httr::upload_file("./addresses.csv"), 
+              benchmark = "Public_AR_Current") %>%
+  req_perform(verbosity = 2)
 
-geocodedAddresses <- POST(batchEndpoint,
-                          body = request_body,
-                          encode = "multipart")
-
-read.delim(text = content(geocodedAddresses, as = "text"), 
+read.delim(text = resp_body_string(geocodedAddresses), 
            sep = ",", 
            header = FALSE)
 ```

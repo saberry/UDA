@@ -24,7 +24,7 @@ hot_links <- c(alt_rock = c("https://www.billboard.com/charts/rock-songs/"),
 # Saturday dates. I'd like to go back 10 years, so I'm going to pick the 
 # first saturday in 2011 and count forward from there:
 
-first_date <- as.Date("2011-01-01")
+first_date <- as.Date("2023-01-01")
 
 current_date <- Sys.Date()
 
@@ -59,18 +59,24 @@ general_scrape_function <- function(link) {
     # We will grab both layout types. One should return the proper length
     # and the other will be a nodeset of 0.
     
-    hot_layout <- html_nodes(initial_read, ".chart-element__information")
+    hot_layout <- html_nodes(initial_read, ".chart-results-list")
     
     regular_layout <- html_nodes(initial_read, ".chart-list-item")
     
     if(length(hot_layout) != 0) {
-      song <- hot_layout |> 
-        html_nodes(".chart-element__information__song") |> 
+      song <- initial_read |> 
+        html_nodes("li.o-chart-results-list__item h3#title-of-a-story") |> 
         html_text()
+
+      song <- gsub("\n|\t", "", song)
       
-      artist <- hot_layout |> 
-        html_nodes(".chart-element__information__artist") |> 
+      artist <- initial_read |> 
+        html_nodes("li.o-chart-results-list__item:first-child .c-label:last-child") |> 
         html_text()
+
+      artist <- gsub("\n|\t", "", artist)
+
+      artist <- artist[!grepl("RE-ENTRY|\\bNEW\\b", artist)]
       
       complete <- data.frame(song = song, 
                              artist = artist, 
@@ -89,7 +95,7 @@ general_scrape_function <- function(link) {
                              link = link)
     }
     
-    return(complete)  
+    #return(complete)  
   }, error = function(e) {
     return(data.frame(song = NA, 
                       artist = NA, 
@@ -114,6 +120,6 @@ all_goat_songs <- future_map_dfr(unlist(goat_links), general_scrape_function)
 
 plan("sequential")
 
-save(all_hot_songs, all_goat_songs,
-     file = "data/billboard_hot_song_links.RData")
+save(all_hot_songs, #all_goat_songs,
+     file = "data/billboard_hot_song_links_23_24.RData")
 

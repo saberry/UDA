@@ -5,7 +5,7 @@
 library(httr)
 library(rvest)
 
-load("data/billboard_cleaned.RData")
+load("data/billboard_cleaned_23_24.RData")
 
 # For each of creating links to genius, I'm going to drop 
 # "Featuring", go lower case, and replace spaces with plus signs
@@ -84,12 +84,12 @@ lyric_links <- function(song, artist, search, original_link,
 
 debugonce(lyric_links)
 
-lyric_links(all_hot_songs$song[1], 
-            all_hot_songs$artist[1], 
-            all_hot_songs$artist_song_search[1], 
-            all_hot_songs$link[1],
-            all_hot_songs$week[1], 
-            all_hot_songs$genre[1])
+lyric_links(all_hot_songs$song[10], 
+            all_hot_songs$artist[10], 
+            all_hot_songs$artist_song_search[10], 
+            all_hot_songs$link[10],
+            all_hot_songs$week[10], 
+            all_hot_songs$genre[10])
 
 plan("future::multisession", workers = availableCores() - 1)
 
@@ -109,4 +109,5 @@ all_goat_links <- furrr::future_pmap_dfr(list(all_goat_songs$song,
 
 plan("sequential")
 
-save(all_lyric_links, all_goat_links, file = "data/genius_lyric_links.RData")
+save(all_lyric_links, #all_goat_links, 
+file = "data/genius_lyric_links_23_24.RData")

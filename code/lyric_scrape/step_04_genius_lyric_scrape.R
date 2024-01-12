@@ -6,7 +6,7 @@ library(future)
 library(furrr)
 library(rvest)
 
-load("data/genius_lyric_links.RData")
+load("data/genius_lyric_links_23_24.RData")
 
 all_lyric_links <- na.omit(all_lyric_links)
 
@@ -50,4 +50,4 @@ plan("sequential")
 
 all_lyrics_info <- cbind(all_lyrics, all_lyric_links)
 
-save(all_lyrics, all_lyrics_info, file = "data/all_lyrics.RData")
+save(all_lyrics, all_lyrics_info, file = "data/all_lyrics_23_24.RData")

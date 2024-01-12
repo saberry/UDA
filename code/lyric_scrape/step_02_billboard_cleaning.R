@@ -5,7 +5,7 @@
 library(data.table)
 library(stringr)
 
-load("data/billboard_hot_song_links.RData")
+load("data/billboard_hot_song_links_23_24.RData")
 
 # Now, we can start to clean up the text.
 # The same clean up will get applied to 
@@ -53,4 +53,5 @@ sum(!is.na(all_hot_songs$link)) == sum(grepl("-songs", all_hot_songs$link))
 all_hot_songs$genre <- str_extract(all_hot_songs$link, 
                                    "(?<=charts/).*(?=-song)")
 
-save(all_hot_songs, all_goat_songs, file = "data/billboard_cleaned.RData")
+save(all_hot_songs, #all_goat_songs, 
+file = "data/billboard_cleaned_23_24.RData")
