@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, jsonify
 from flask_restful import Resource, Api
 from flask_cors import CORS
 import os
@@ -12,32 +12,10 @@ from sklearn.impute import IterativeImputer
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-
-def department_encode(data_name):
-  encode_cats = pd.get_dummies(data_name['department'], prefix='department')
-  new_data = data_name.drop({'department'}, axis=1)
-  encoded_data = new_data.join(encode_cats)
-  return encoded_data
-
-def predictor_outcome_split(data_name):
-  predictors = data_name.drop('separatedNY', axis=1)
-  outcome = data_name['separatedNY']
-  return predictors, outcome
-
-def impute_function(predictors_df):
-  imp_mean = IterativeImputer(random_state=1001)
-  imputed_data = imp_mean.fit_transform(predictors_df)
-  return imputed_data
-
-def smote_balance_function(imputed_data_name, outcome_name):
-  smote_enn = SMOTEENN(random_state=1001)
-  balanced_data, balanced_outcome = smote_enn.fit_resample(
-    imputed_data_name, outcome_name
-    )
-  return balanced_data, balanced_outcome
+import traceback
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"*": {"origins": "*"}})
+# cors = CORS(app, resources={r"*": {"origins": "*"}})
 api = Api(app)
 
 class Test(Resource):
@@ -61,19 +39,45 @@ class GetPredictionOutput(Resource):
 
     def post(self):
         try:
-            data = request.get_json()
-            predictors, outcome = data.pipe(department_encode).pipe(predictor_outcome_split)
-            imputed_predictors = impute_function(predictors)
-            balanced_data, balanced_outcome = smote_balance_function(imputed_predictors, outcome)
-            X_test_scaler = StandardScaler().fit(balanced_data)
-            X_test_scaled = X_test_scaler.transform(balanced_data)
+            # def department_encode(data_name):
+            #   encode_cats = pd.get_dummies(data_name['department'], prefix='department')
+            #   new_data = data_name.drop({'department'}, axis=1)
+            #   encoded_data = new_data.join(encode_cats)
+            #   return encoded_data
+            # 
+            # def predictor_outcome_split(data_name):
+            #   predictors = data_name.drop('separatedNY', axis=1)
+            #   outcome = data_name['separatedNY']
+            #   return predictors, outcome
+            # 
+            # def impute_function(predictors_df):
+            #   imp_mean = IterativeImputer(random_state=1001)
+            #   imputed_data = imp_mean.fit_transform(predictors_df)
+            #   return imputed_data
+            # 
+            # def smote_balance_function(imputed_data_name, outcome_name):
+            #   smote_enn = SMOTEENN(random_state=1001)
+            #   balanced_data, balanced_outcome = smote_enn.fit_resample(
+            #     imputed_data_name, outcome_name
+            #     )
+            #   return balanced_data, balanced_outcome
 
-            predict = prediction.predict_turnover(X_test_scaled)
+            data = request.get_json()
+            
+            data = pd.DataFrame(data, index=[0])
+            
+            # predictors, outcome = data.pipe(department_encode).pipe(predictor_outcome_split)
+            # imputed_predictors = impute_function(predictors)
+            # balanced_data, balanced_outcome = smote_balance_function(imputed_predictors, outcome)
+            # X_test_scaler = StandardScaler().fit(balanced_data)
+            # X_test_scaled = X_test_scaler.transform(balanced_data)
+
+            predict = prediction.predict_turnover(data)
             predictOutput = predict
-            return {'predict':predictOutput}
+            return jsonify({'predict':predictOutput})
 
         except Exception as error:
-            return {'error': error}
+            return jsonify({'trace': traceback.format_exc()})
 
 api.add_resource(Test,'/')
 api.add_resource(GetPredictionOutput,'/getPredictionOutput')

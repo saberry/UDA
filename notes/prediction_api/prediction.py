@@ -1,4 +1,4 @@
-import pickle
+from joblib import load, dump
 import pandas as pd
 import json
 
