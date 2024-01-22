@@ -1,12 +1,12 @@
 from flask import Flask, request, redirect, jsonify
 from flask_restful import Resource, Api
 from flask_cors import CORS
-import os
-import prediction
-from joblib import load, dump
 from imblearn.combine import SMOTEENN
+from joblib import load, dump
 import numpy as np
+import os
 import pandas as pd
+import prediction
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.metrics import confusion_matrix
@@ -15,7 +15,6 @@ from sklearn.preprocessing import StandardScaler
 import traceback
 
 app = Flask(__name__)
-# cors = CORS(app, resources={r"*": {"origins": "*"}})
 api = Api(app)
 
 class Test(Resource):

@@ -1,7 +1,9 @@
 {
 	"age":26, 
 	"numberPriorJobs":2,
-	"department":1,
+	"department1":0,
+	"department2":1,
+	"department3":0,
 	"proportion401K":65,
 	"startingSalary":5000,
 	"currentSalary":75000,
