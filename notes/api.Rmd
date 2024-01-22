@@ -304,13 +304,7 @@ request(batchEndpoint) %>%
   req_perform(verbosity = 2)
 ```
 
-We have information split up over the head and the body, so let's try moving all of it into the body:
-
-```{r}
-
-```
-
-That is a victory! Let's try this out now:
+Let's try this out now:
 
 ```{r}
 geocodedAddresses <- request(batchEndpoint) %>%
@@ -343,11 +337,12 @@ pd.read_csv(StringIO(r.text))
 Using any POST request is just a minor variant of what we just saw. Let's tackle something fun. We had previously used GET to pass parameters into the url, but some APIs just want query parameters. 
 
 ```{r}
-nbaPlayers <- GET("https://www.balldontlie.io/api/v1/players", 
-                  query = list(page = 1, 
-                               per_page = 100))
+nbaPlayers <- request("https://www.balldontlie.io/api/v1/players") |> 
+  req_url_query(page = 1, 
+                per_page = 100) |> 
+  req_perform()
 
-nbaPlayers <- content(nbaPlayers, as = "text")
+nbaPlayers <- resp_body_string(nbaPlayers)
 
 nbaPlayers <- jsonlite::fromJSON(nbaPlayers, flatten = TRUE)
 
@@ -360,11 +355,12 @@ Any ideas about how we can process everything? There are many ways, but let's se
 
 ```{r, eval = FALSE}
 nbaPlayersOut <- purrr::map_df(1:2, ~{
-  nbaPlayers <- GET("https://www.balldontlie.io/api/v1/players", 
-                    query = list(page = .x, 
-                                 per_page = 100))
+  nbaPlayers <- request("https://www.balldontlie.io/api/v1/players") |> 
+    req_url_query(page = .x, 
+                  per_page = 100) |> 
+    req_perform()
   
-  nbaPlayers <- content(nbaPlayers, as = "text")
+  nbaPlayers <- resp_body_string(nbaPlayers)
   
   nbaPlayers <- jsonlite::fromJSON(nbaPlayers, flatten = TRUE)
   
@@ -380,11 +376,13 @@ pages <- 1
 results <- list()
 
 while(is.null(pages) == FALSE) {
-  nbaPlayers <- GET("https://www.balldontlie.io/api/v1/players", 
-                    query = list(page = pages, 
-                                 per_page = 100))
   
-  nbaPlayers <- content(nbaPlayers, as = "text")
+  nbaPlayers <- request("https://www.balldontlie.io/api/v1/players") |> 
+    req_url_query(page = pages, 
+                  per_page = 100) |> 
+    req_perform()
+  
+  nbaPlayers <- resp_body_string(nbaPlayers)
   
   nbaPlayers <- jsonlite::fromJSON(nbaPlayers, flatten = TRUE)
   
@@ -409,11 +407,12 @@ results <- list()
 while(is.null(pages) == FALSE) {
   Sys.sleep(sample(runif(1, min = 1, max = 3)))
   
-  nbaPlayers <- GET("https://www.balldontlie.io/api/v1/players", 
-                    query = list(page = pages, 
-                                 per_page = 100))
+   nbaPlayers <- request("https://www.balldontlie.io/api/v1/players") |> 
+    req_url_query(page = pages, 
+                  per_page = 100) |> 
+    req_perform()
   
-  nbaPlayers <- content(nbaPlayers, as = "text")
+  nbaPlayers <- resp_body_string(nbaPlayers)
   
   nbaPlayers <- jsonlite::fromJSON(nbaPlayers, flatten = TRUE)
   
@@ -470,15 +469,20 @@ callConstruction <- paste("https://www.googleapis.com/youtube/v3/search?part=id,
                           "&maxResults=1&type=video&key=", k,
                           sep = "")
 
-videoID <- content(GET(callConstruction))$items[[1]]$id$videoId
+video_id_req <- request(callConstruction) |> 
+  req_perform() |> 
+  resp_body_json()
+
+videoID <- video_id_req$items[[1]]$id$videoId
 
 commentLink <- paste("https://www.googleapis.com/youtube/v3/commentThreads?part=id&videoId=", 
                      videoID, "&key=", k, 
                      sep = "")
 
-commentReturn <- GET(commentLink)
+commentReturn <- request(commentLink) |> 
+  req_perform()
 
-commentData <- jsonlite::fromJSON(content(commentReturn, as = "text"))
+commentData <- jsonlite::fromJSON(resp_body_string(commentReturn))
 
 commentData
 ```
@@ -493,9 +497,10 @@ commentTextLink <- paste("https://www.googleapis.com/youtube/v3/comments?part=id
                      "&textFormat=plainText",
                      sep = "")
 
-commentReturn <- GET(commentTextLink)
-
-content(commentReturn, as = "parsed")
+request(commentTextLink) |> 
+  req_perform() |> 
+  resp_body_string() |> 
+  jsonlite::fromJSON()
 ```
 
 Let's see what this might look like with multiple comments:
@@ -510,7 +515,10 @@ commentTextLink <- paste("https://www.googleapis.com/youtube/v3/comments?part=id
                               "&key=", k, "&textFormat=plainText",
                               sep = "")
 
-commentReturn <- GET(commentTextLink)
+commentReturn <- request(commentTextLink) |> 
+  req_perform() |> 
+  resp_body_string() |> 
+  jsonlite::fromJSON()
 
-jsonlite::fromJSON(content(commentReturn, as = "text"))
+commentReturn
 ```
