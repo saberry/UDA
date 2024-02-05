@@ -160,7 +160,7 @@ library(stringr)
 library(stm)
 library(tm)
 
-load("D:/projects/UDA/data/all_lyrics.RData")
+all_lyrics_info <- arrow::read_feather("data/billboard_songs_11_23.feather")
 
 model_data <- all_lyrics_info[duplicated(all_lyrics_info$lyric_link) == FALSE, 
                               c("lyrics", "genre", "week")] %>% 
@@ -168,13 +168,19 @@ model_data <- all_lyrics_info[duplicated(all_lyrics_info$lyric_link) == FALSE,
 
 Encoding(model_data$lyrics) <- "UTF-8"
 
-rm(all_lyrics, all_lyrics_info)
+model_data$lyrics <- gsub(".*\\slyrics\\s", "", model_data$lyrics)
+
+model_data$lyrics <- gsub(
+  "see .* live get tickets as low as \\d+", 
+  "", 
+  model_data$lyrics
+)
+
+rm(all_lyrics_info)
 
 model_data$week <- stringr::str_extract(model_data$week, "\\d{4}")
 
 colnames(model_data)[colnames(model_data) == "week"] <- "year"
-
-model_data$lyrics <- gsub("\\d+Embed.*$", "", model_data$lyrics)
 
 model_data$lyrics <- model_data$lyrics %>% 
   textclean::replace_contraction() %>% 
@@ -183,7 +189,8 @@ model_data$lyrics <- model_data$lyrics %>%
   str_squish() %>% 
   gsub("([a-z])([A-Z])", "\\1 \\2", .) %>% 
   tolower() %>% 
-  textstem::lemmatize_strings(.)
+  textstem::lemmatize_strings(.) %>% 
+  removeWords(stopwords("SMART"))
 
 # creates the corpus with document variables except for the "text"
 lyric_corpus <- corpus(model_data, text_field = "lyrics")
@@ -206,6 +213,8 @@ meta_stm <- lyric_stm$meta
 lyricPrep <- prepDocuments(documents = docs_stm, 
                            vocab = vocab_stm,
                            meta = meta_stm)
+
+save(lyricPrep, file = "data/lyricPrep_11_24.RData")
 ```
 
 The stm package has some pretty nice facilities for determining a number of topics. Be warned, though, that this takes a long time to run. Mac users can use the `cores` argument, but Windows users will need to do something a little craftier.
@@ -233,6 +242,7 @@ It is worthwhile to note that we can also do model selection with the stm packag
 With our 5 topics, we can start our actual model:
 
 ```{r}
+load("data/lyricPrep_11_24.RData")
 topics5 <- stm(documents = lyricPrep$documents, 
              vocab = lyricPrep$vocab, seed = 1001,
              K = 5, verbose = FALSE)
@@ -297,7 +307,18 @@ lyricPrep$documents[[3]]
 lyricPrep$vocab[lyricPrep$documents[[3]][1, ]]
 ```
 
-Let's return to our prediction task from last time:
+```{r}
+topics5_genre <- stm(documents = lyricPrep$documents, 
+             vocab = lyricPrep$vocab, 
+             content = ~genre, data = lyricPrep$meta,
+             seed = 1001,
+             K = 5, verbose = FALSE)
+
+plot(topics5_genre, type = "perspectives", topics = 1)
+```
+
+
+Let's see how these work in a model.
 
 ```{r}
 library(mlr3)
@@ -316,7 +337,9 @@ model_data[, topic_cols] <- apply(model_data[, topic_cols], 2, as.numeric)
 model_data$genre <- as.factor(model_data$genre)
 
 # create learning task
-music_task <- TaskClassif$new(id = "lyrics", backend = model_data, target = "genre")
+music_task <- TaskClassif$new(
+  id = "lyrics", backend = model_data, target = "genre"
+)
 music_task
 
 train_set <- sample(music_task$nrow, 0.8 * music_task$nrow)
@@ -346,24 +369,16 @@ if(Sys.info()["sysname"] == "Darwin") {
   load("~/courses/unstructured/data/allLyricsDF.RData")
 } else load("D:/projects/courses/unstructured/data/allLyricsDF.RData")
 
-cleanLyrics = allLyricsDF %>%
-  filter(stringDistance < .1) %>% 
-  dplyr::select(lyrics, returnedArtistName, returnedSong, date) %>%
-  mutate(text = as.character(lyrics), 
-         text = str_replace_all(text, "\n", " "),   
-         text = str_replace_all(text, "(\\[.*?\\])", ""),
-         text = str_squish(text), 
-         text = gsub("([a-z])([A-Z])", "\\1 \\2", text), 
-         text = tolower(text), 
-         text = removeWords(text, c("’", tm::stopwords(kind = "en"))), 
-         text = removePunctuation(text), 
-         text = removeNumbers(text),
-         text = textstem::lemmatize_strings(text), 
-         year = as.numeric(stringr::str_extract(date, "\\d{4}"))) %>% 
-  as.data.frame()
+all_lyrics <- arrow::read_feather("data/country_only_70_24.feather")
 
-predictorText <- textProcessor(documents = cleanLyrics$text, 
-                          metadata = cleanLyrics, 
+all_lyrics$date <- stringr::str_extract(all_lyrics$og, "\\d{4}")
+
+all_lyrics$date <- as.numeric(all_lyrics$date)
+
+all_lyrics$text <- textstem::lemmatize_strings(all_lyrics$lyrics)
+
+predictorText <- textProcessor(documents = all_lyrics$text, 
+                          metadata = all_lyrics, 
                           stem = FALSE)
 
 lyricPrep <- prepDocuments(documents = predictorText$documents, 
@@ -371,27 +386,33 @@ lyricPrep <- prepDocuments(documents = predictorText$documents,
                                meta = predictorText$meta)
 
 topicPredictor <- stm(documents = lyricPrep$documents,
-             vocab = lyricPrep$vocab, prevalence = ~ year,
+             vocab = lyricPrep$vocab, prevalence = ~ date,
              data = lyricPrep$meta, K = 5, verbose = FALSE)
 
-yearEffect <- estimateEffect(1:5 ~ year, stmobj = topicPredictor,
+yearEffect <- estimateEffect(1:5 ~ date, stmobj = topicPredictor,
                metadata = lyricPrep$meta)
+save(topicPredictor, yearEffect, file = "data/country_only_stm.RData")
+```
+
+```{r}
+load("data/country_only_stm.RData")
+labelTopics(topicPredictor)
 
 summary(yearEffect, topics = c(1:5))
 
-plot.estimateEffect(yearEffect, "year", method = "continuous",
+plot.estimateEffect(x = yearEffect, covariate = "date", method = "continuous",
                     model = topicPredictor, topics = 1, labeltype = "frex")
 
-plot.estimateEffect(yearEffect, "year", method = "continuous",
+plot.estimateEffect(yearEffect, "date", method = "continuous",
                     model = topicPredictor, topics = 2, labeltype = "frex")
 
-plot.estimateEffect(yearEffect, "year", method = "continuous",
+plot.estimateEffect(yearEffect, "date", method = "continuous",
                     model = topicPredictor, topics = 3, labeltype = "frex")
 
-plot.estimateEffect(yearEffect, "year", method = "continuous",
+plot.estimateEffect(yearEffect, "date", method = "continuous",
                     model = topicPredictor, topics = 4, labeltype = "frex")
 
-plot.estimateEffect(yearEffect, "year", method = "continuous",
+plot.estimateEffect(yearEffect, "date", method = "continuous",
                     model = topicPredictor, topics = 5, labeltype = "frex")
 ```
 

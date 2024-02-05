@@ -1,0 +1,835 @@
+---
+title: "Matrix Operations and Dimension Reduction"
+format:
+  html:
+    toc: true
+    toc-location: left
+    self-contained: true
+---
+
+##  Matrix Operations 
+
+Addition, subtraction, and multiplication. These are all things you already know how to do with scalars. What happens, though, if you want to multiply two different matrices together. Does that simple, scalar operation still translate if you have a $2x3$ matrix and a $3x2$ matrix? Maybe you've encountered these concepts before, possibly in the first 3 weeks of a graduate statistics course; you left that class confused, angry, and wondering why you would be subjected to such nonsense. 
+
+Matrix operations, especially multiplication, are critical for understanding how models actually work. Knowing the underlying mechanics of matrix operations helps to demystify several issues that you might run into with your models. You'll frequently see model output tell you how many records were deleted due to missingness. You'll then find yourself wondering why is missingness such a problem that entire rows get deleted from your model? 
+
+Before we get into any operations, though, let's make sure we are together on some concepts. 
+
+A *scalar* is a single value. It might help if you think about a scalar as a single block.
+
+```{r}
+scalar_example = 1
+```
+
+```{python}
+scalar_example = 1
+```
+
+Just like we can line blocks up on the floor, we can put our scalars together to form a *vector*. A vector is a collection of scalars with a length of **n**. 
+
+```{r}
+vector_example = 1:5
+```
+
+This vector containing values from 1 to 5 would have a length of 5. 
+
+```{python}
+vector_example = range(0, 5)
+```
+
+Now, we can take a few of our block vectors and assemble them into a *matrix*. A matrix is a 2 dimensional collection of vectors. 
+
+\@ref(fig:matrix_blocks)
+
+$$
+\begin{bmatrix}
+1 & 2 & 3\\
+4 & 5 & 6
+\end{bmatrix}
+$$
+
+If you think about most tables you've ever seen, you'll see that the simple matrix looks remarkably familiar!
+
+A matrix has 2 dimensions, rows and columns. When we talk about the dimensions of a matrix, we always make note of the rows first, followed by the columns. This matrix has 2 rows and 3 columns; therefore, we have a $2x3$ matrix.
+
+## Addition
+
+Matrix addition, along with subtraction, is the easiest concept when dealing with matrices. While it is easy to grasp, you will not find it featured as prominently as matrix multiplication.
+
+There is one rule for matrix addition: the matrices need to have the same dimensions. 
+
+Let's check out these two matrices:
+
+$$
+\stackrel{\mbox{Matrix A}}{
+\begin{bmatrix}
+1_{11} & 2_{12} & 3_{13}\\
+4_{21} & 5_{22} & 6_{23}
+\end{bmatrix}
+}  
+\ 
+\stackrel{\mbox{Matrix B}}{
+\begin{bmatrix}
+7_{11} & 8_{12} & 9_{13}\\
+9_{21} & 8_{22} & 7_{23}
+\end{bmatrix} 
+}
+$$
+
+You probably noticed that we gave each scalar within the matrix a label associated with its row and column position. We can use these to see how we will produce the new matrix: 
+
+Now, we can set this up as an addition problem to produce Matrix C:
+
+$$
+\stackrel{\mbox{Matrix A}}{
+\begin{bmatrix}
+1_{11} & 2_{12} & 3_{13}\\
+4_{21} & 5_{22} & 6_{23}
+\end{bmatrix}
+}  
++ 
+\stackrel{\mbox{Matrix B}}{
+\begin{bmatrix}
+7_{11} & 8_{12} & 9_{13}\\
+9_{21} & 8_{22} & 7_{23}
+\end{bmatrix} 
+}
+=
+\stackrel{\mbox{Matrix C}}{
+\begin{bmatrix}
+A_{11} + B_{11}& A_{12} + B_{12} & A_{13} + B_{13}\\
+A_{21} + B_{21}& A_{22} + B_{22} & A_{23} + B_{23}
+\end{bmatrix}
+}
+$$
+
+Now we can pull in the real numbers:
+
+$$
+\stackrel{\mbox{Matrix A}}{
+\begin{bmatrix}
+1_{11} & 2_{12} & 3_{13}\\
+4_{21} & 5_{22} & 6_{23}
+\end{bmatrix}
+}  
++ 
+\stackrel{\mbox{Matrix B}}{
+\begin{bmatrix}
+7_{11} & 8_{12} & 9_{13}\\
+9_{21} & 8_{22} & 7_{23}
+\end{bmatrix} 
+}
+=
+\stackrel{\mbox{Matrix C}}{
+\begin{bmatrix}
+1 + 7  & 2 + 8 & 3 + 9\\
+4 + 9 & 5 + 8 & 6 + 7
+\end{bmatrix}
+}
+$$
+
+Giving us Matrix C:
+
+$$
+\stackrel{\mbox{Matrix A}}{
+\begin{bmatrix}
+1_{11} & 2_{12} & 3_{13}\\
+4_{21} & 5_{22} & 6_{23}
+\end{bmatrix}
+}  
++ 
+\stackrel{\mbox{Matrix B}}{
+\begin{bmatrix}
+7_{11} & 8_{12} & 9_{13}\\
+9_{21} & 8_{22} & 7_{23}
+\end{bmatrix} 
+}
+=
+\stackrel{\mbox{Matrix C}}{
+\begin{bmatrix}
+8 & 10 & 12 \\
+13 & 13 & 13
+\end{bmatrix}
+}
+$$
+
+## Subtraction
+
+Take everything that you just saw with addition and replace it with subtraction! 
+
+Just like addition, every matrix needs to have the same dimensions if you are going to use subtraction. 
+
+Let's see those two matrices again and cast it as subtraction problem:
+
+$$
+\stackrel{\mbox{Matrix A}}{
+\begin{bmatrix}
+1_{11} & 2_{12} & 3_{13}\\
+4_{21} & 5_{22} & 6_{23}
+\end{bmatrix}
+}
+-
+\stackrel{\mbox{Matrix B}}{
+\begin{bmatrix}
+7_{11} & 8_{12} & 9_{13}\\
+9_{21} & 8_{22} & 7_{23}
+\end{bmatrix} 
+}
+=
+\stackrel{\mbox{Matrix C}}{
+\begin{bmatrix}
+A_{11} - B_{11}& A_{12} - B_{12} & A_{13} - B_{13}\\
+A_{21} - B_{21}& A_{22} - B_{22} & A_{23} - B_{23}
+\end{bmatrix}
+}
+$$
+
+And now we can substitute in the real numbers:
+
+$$
+\stackrel{\mbox{Matrix A}}{
+\begin{bmatrix}
+1_{11} & 2_{12} & 3_{13}\\
+4_{21} & 5_{22} & 6_{23}
+\end{bmatrix}
+}
+-
+\stackrel{\mbox{Matrix B}}{
+\begin{bmatrix}
+7_{11} & 8_{12} & 9_{13}\\
+9_{21} & 8_{22} & 7_{23}
+\end{bmatrix} 
+}
+=
+\stackrel{\mbox{Matrix C}}{
+\begin{bmatrix}
+1 - 7 & 2 - 8 & 3 - 9\\
+4 - 9 & 5 - 8 & 6 - 7
+\end{bmatrix}
+}
+$$
+
+And end with this matrix:
+
+$$
+\stackrel{\mbox{Matrix A}}{
+\begin{bmatrix}
+1_{11} & 2_{12} & 3_{13}\\
+4_{21} & 5_{22} & 6_{23}
+\end{bmatrix}
+}
+-
+\stackrel{\mbox{Matrix B}}{
+\begin{bmatrix}
+7_{11} & 8_{12} & 9_{13}\\
+9_{21} & 8_{22} & 7_{23}
+\end{bmatrix} 
+}
+=
+\stackrel{\mbox{Matrix C}}{
+\begin{bmatrix}
+-6 & -6 & -6 \\
+-5 & -3 & -1
+\end{bmatrix}
+}
+$$
+
+Adding and subtracting matrices in R and Python is pretty simple. 
+
+In R, we can create a matrix a few ways: with the matrix function or by row binding numeric vectors.
+
+```{r}
+matrix_A = rbind(1:3, 
+                  4:6)
+
+# The following is an equivalent
+# to rbind:
+# matrix_A = matrix(c(1:3, 4:6), 
+#                    nrow = 2, 
+#                    ncol = 3, byrow = TRUE)
+
+matrix_B = rbind(7:9, 
+                  9:7)
+```
+
+Once we have those matrices created, we can use the standard `+` and `-` signs to add and subtract:
+
+```{r}
+matrix_A + matrix_B
+
+matrix_A - matrix_B
+```
+
+The task is just as easy in Python. We will import `numpy` and then use the `matrix` method to create the matrices:
+
+```{python}
+import numpy as np
+
+matrix_A = np.matrix('1 2 3; 4 5 6')
+
+matrix_B = np.matrix('7 8 9; 9 8 7')
+```
+
+Just like R, we can use `+` and `-` on those matrices.
+
+```{python}
+matrix_A + matrix_B
+
+matrix_A - matrix_B
+```
+
+## Transpose
+
+As you progress through this book, you might see a matrix denoted as $A^T$; here the superscripted T stands for *transpose*. If we transpose a matrix, all we are doing is flipping the rows and columns along the matrix's main diagonal. A visual example is much easier:
+
+$$
+\stackrel{\mbox{Matrix A}}{
+\begin{bmatrix}
+1_{11} & 2_{12} & 3_{13}\\
+4_{21} & 5_{22} & 6_{23}
+\end{bmatrix}
+}
+->
+\stackrel{\mbox{Matrix A}^T}{
+\begin{bmatrix}
+1 & 4 \\
+2 & 5 \\
+3 & 6
+\end{bmatrix}
+}
+$$
+
+Like any matrix operation, a transpose is pretty easy to do when the matrix is small; you're best bet is to rely on software to do anything beyond a few rows or columns. 
+
+In R, all we need is the `t` function:
+
+```{r}
+t(matrix_A)
+```
+
+In Python, we can use numpy's `transpose` method:
+
+```{python}
+matrix_A.transpose()
+```
+
+## Multiplication
+
+Now, you probably have some confidence in doing matrix operations. Just as quickly as we built that confidence, it will be crushed when learning about matrix multiplication. 
+
+When dealing with matrix multiplication, we have a huge change to our rule. No longer can our dimensions be the same! Instead, the matrices need to be *conformable* -- the first matrix needs to have the same number of columns as the number of rows within the second matrix. In other words, the inner dimensions must match. 
+
+Look one more time at these matrices:
+
+$$
+\stackrel{\mbox{Matrix A}}{
+\begin{bmatrix}
+1_{11} & 2_{12} & 3_{13}\\
+4_{21} & 5_{22} & 6_{23}
+\end{bmatrix}
+}
+.
+\stackrel{\mbox{Matrix B}}{
+\begin{bmatrix}
+7_{11} & 8_{12} & 9_{13}\\
+9_{21} & 8_{22} & 7_{23}
+\end{bmatrix} 
+}
+$$
+
+Matrix A has dimensions of $2x3$, as does Matrix B. Putting those dimensions side by side -- $2x3 * 2x3$ -- we see that our inner dimensions are 3 and 2 and do not match. 
+
+What if we *transpose* Matrix B?
+
+$$
+\stackrel{\mbox{Matrix B}^T}{
+\begin{bmatrix}
+7_{11} & 9_{12} \\ 
+8_{21}& 8_{22}\\
+9_{31} & 7_{32}
+\end{bmatrix} 
+}
+$$
+
+Now we have something that works!
+
+$$
+\stackrel{\mbox{Matrix A}}{
+\begin{bmatrix}
+1_{11} & 2_{12} & 3_{13}\\
+4_{21} & 5_{22} & 6_{23}
+\end{bmatrix}
+}
+.
+\stackrel{\mbox{Matrix B}^T}{
+\begin{bmatrix}
+7_{11} & 9_{12} \\ 
+8_{21}& 8_{22}\\
+9_{31} & 7_{32}
+\end{bmatrix} 
+}
+=
+\stackrel{\mbox{Matrix C}}{
+\begin{bmatrix}
+. & . \\
+. & . \\
+\end{bmatrix}
+}
+$$
+
+Now we have a $2x3 * 3x2$ matrix multiplication problem! The resulting matrix will have the same dimensions as our two matrices' outer dimensions: $2x2$
+
+Here is how we will get at $2x2$ matrix:
+
+$$
+\stackrel{\mbox{Matrix A}}{
+\begin{bmatrix}
+1_{11} & 2_{12} & 3_{13}\\
+4_{21} & 5_{22} & 6_{23}
+\end{bmatrix}
+}
+.
+\stackrel{\mbox{Matrix B}^T}{
+\begin{bmatrix}
+7_{11} & 9_{12} \\ 
+8_{21}& 8_{22}\\
+9_{31} & 7_{32}
+\end{bmatrix} 
+}
+=
+$$
+$$
+\stackrel{\mbox{Matrix C}}{
+\begin{bmatrix}
+(A_{11}*B_{11})+(A_{12}*B_{21})+(A_{13}*B_{31}) & (A_{11}*B_{12})+(A_{12}*B_{22})+(A_{13}*B_{32}) \\
+(A_{21}*B_{11})+(A_{22}*B_{21})+(A_{23}*B_{31}) & (A_{21}*B_{12})+(A_{22}*B_{22})+(A_{23}*B_{32})
+\end{bmatrix} 
+}
+$$
+
+That might look like a horrible mess and likely isn't easy to commit to memory. Instead, we'd like to show you a way that might make it easier to remember how to multiply matrices. It also gives a nice representation of why your matrices need to be conformable.
+
+We can leave Matrix A exactly where it is, flip Matrix B$^T$, and stack it right on top of Matrix A:
+
+$$
+\begin{bmatrix}
+9_{b} & 8_{b} & 7_{b} \\
+7_{b} & 8_{b} & 9_{b} \\
+\\
+1_{a} & 2_{a} & 3_{a} \\
+4_{a} & 5_{a} & 6_{a}
+\end{bmatrix}
+$$
+
+Now, we can let those rearranged columns from Matrix B$^T$ "fall down" through the rows of Matrix A:
+
+$$
+\begin{bmatrix}
+9_{b} & 8_{b} & 7_{b} \\
+\\
+1_{a}*7_{b} & 2_{a}*8_{b} & 3_{a}*9_{b}\\
+4_{a} & 5_{a} & 6_{a}
+\end{bmatrix}
+= 
+\stackrel{\mbox{Matrix C}}{
+\begin{bmatrix}
+50 & .\\
+. & .
+\end{bmatrix}
+}
+$$
+
+Adding those products together gives us 50 for $C_{11}$.
+
+Let's move that row down to the next row in the Matrix A, multiply, and sum the products.
+
+$$
+\begin{bmatrix}
+9_{b} & 8_{b} & 7_{b} \\
+\\
+1_{a} & 2_{a} & 3_{a}\\
+4_{a}*7_{b} & 5_{a}*8_{b} & 6_{a}*9_{b}
+\end{bmatrix}
+= 
+\stackrel{\mbox{Matrix C}}{
+\begin{bmatrix}
+50 & .\\
+122 & .
+\end{bmatrix}
+}
+$$
+
+We have 122 for $C_{21}$. That first column from Matrix B$^T$ won't be used any more, but now we need to move the second column through Matrix A.
+
+$$
+\begin{bmatrix}
+1_{a}*9_{b} & 2_{a}*8_{b} & 3_{a}*7_{b}\\
+4_{a} & 5_{a} & 6_{a}
+\end{bmatrix}
+= 
+\stackrel{\mbox{Matrix C}}{
+\begin{bmatrix}
+50 & 46\\
+122 & .
+\end{bmatrix}
+}
+$$
+
+That gives us 46 for $C_{12}$. 
+
+And finally:
+
+$$
+\begin{bmatrix}
+1_{a} & 2_{a} & 3_{a}\\
+4_{a}*9_{b} & 5_{a}*8_{b} & 6_{a}*7_{b}
+\end{bmatrix}
+=
+\stackrel{\mbox{Matrix C}}{
+\begin{bmatrix}
+50 & 46\\
+122 & 118
+\end{bmatrix}
+}
+$$
+
+We have 118 for $C_{22}$.
+
+Now that you know how these work, you can see how easy it is to handle these tasks in R and Python.
+
+In R, we need to use a fancy operator: `%*%`. This is just R's matrix multiplication operator. We will also use the transpose function: `t`. 
+
+```{r}
+matrix_A %*% t(matrix_B)
+```
+
+In Python, we can just use the regular multiplication operator and the transpose method:
+
+```{python}
+matrix_A * matrix_B.transpose()
+```
+
+You can see that whether we do this by hand, R, or Python, we come up with the same answer! While these small matrices can definitely be done by hand, we will always trust the computer to handle larger matrices. 
+
+Whether you knew it or not, every stat/ML method is full of matrix algebra (and optimization).
+
+Let's see something that you already know:
+
+```{r}
+set.seed(1001)
+
+N <- 1000 # sample size
+k <- 2  # variables
+X <- matrix(rnorm(N * k), ncol = k)  
+X <- cbind(X, 1)
+y <- -.5 + .2 * X[, 1] + rnorm(N, sd = .5)  
+
+head(X)
+
+head(y)
+```
+
+Now we can do some matrix multiplication. Let's take the transpose of X, multiply it by the original X, and solve the resultant matrix:
+
+```{r}
+transposeX <- t(X)
+
+multiplyX <- transposeX %*% X
+
+solveX <- solve(multiplyX) 
+
+solveX
+```
+
+The `solve` function can solve linear systems, but we are using it to find the inverse of the matrix. The long way of finding the matrix inverse is nothing but pain.
+
+And here is the beauty -- we took that X matrix, multiplied it by its transposed self, and reduced its dimension to a 3 X 3 matrix.
+
+Next, let's take that transposed X and multiply it by Y:
+
+```{r}
+multiplyY <- transposeX %*% y
+multiplyY
+```
+
+Finally, we can take our solveX and multiply it by the multiplyY matrix:
+
+```{r}
+dim(solveX)
+dim(multiplyY)
+solveX %*% multiplyY
+```
+
+All of that to get exactly 3 values in a 3 X 1 matrix. Some of you might have played this game before, but for those who haven't, we taken the long way to find this:
+
+```{r}
+summary(lm(y ~ X[, 1:2]))
+```
+
+Correlation, regression, and just about everything else is done with matrix multiplication.
+
+
+## Inversion
+
+You might want to think of *matrix inversion* as the reciprocal of the matrix, usually noted as $A^{-1}$. The biggest reason that we might invert a matrix is because there is no matrix division.
+
+Inversion can only be performed on square matrices (e.g., $2x2$, $3x3$, $4x4$) and the *determinant* of a matrix cannot be 0. Since the determinant is important for finding the inverse, we should probably have an idea about how to find the determinant.
+
+### Matrix Determinant
+
+While we've been using the matrix row/column positions in our examples, we are going to shift to letters to label the positions. We can start with a $2x2$ matrix:
+
+$$
+\stackrel{\mbox{Matrix C}}{
+\begin{bmatrix}
+A & B\\
+C & D
+\end{bmatrix}
+}
+$$
+
+To find the determinant, we would take $\mid C \mid = (A*D) - (B*C)$.
+
+Returning back to Matrix C, we have $\mid C \mid = (50_a*118_d) - (46_b*122_c) = 288$
+
+$$
+\stackrel{\mbox{Matrix C}}{
+\begin{bmatrix}
+50 & 46\\
+122 & 118
+\end{bmatrix}
+}
+$$
+
+A $3x3$ matrix doesn't pose much more of a challenge. 
+
+$$
+\stackrel{\mbox{Matrix D}}{
+\begin{bmatrix}
+A & B & C\\
+D & E & F\\
+G & H & I
+\end{bmatrix}
+}
+$$
+
+The canonical form might not be as intuitive, but it is worth seeing:
+
+$$
+\mid D \mid = A\begin{vmatrix}
+E & I\\
+F & H
+\end{vmatrix}  - 
+B\begin{vmatrix}
+D & I\\
+F & G
+\end{vmatrix} + 
+C\begin{vmatrix}
+D & H\\
+E & G
+\end{vmatrix}
+$$
+
+Breaking it down a bit further will help to see where all of the values go:
+
+$$
+\mid D \mid = A(E*I - F*H) - B(D*I - F*G) + C(D*H - E*G)
+$$
+Now we can work that out with a real matrix:
+
+$$
+\stackrel{\mbox{Matrix D}}{
+\begin{bmatrix}
+2 & 1 & 3\\
+6 & 5 & 4\\
+7 & 8 & 9
+\end{bmatrix}
+}
+$$
+
+To get our determinant:
+
+$$
+\mid D \mid = 2(5*9 - 4*8) - 1(6*9 - 4*7) + 3(6*8 - 5*7) = 39
+$$
+
+And just to confirm that our math is correct, we can check for the determinant in R and Python. 
+
+R has a handy function called `det`:
+
+```{r}
+matrix_D = matrix(c(2, 1, 3,
+                     6, 5, 4,
+                     7, 8, 9), 
+                   nrow = 3, 
+                   ncol = 3, 
+                   byrow = TRUE)
+
+det(matrix_D)
+```
+
+We can keep using `numpy`, but we will have to use `det` within the `linalg` module.
+
+```{python}
+matrix_D = np.matrix('2 1 3; 6 5 4; 7 8 9')
+
+np.linalg.det(matrix_D)
+```
+
+Just to show you how this pattern would continue
+
+You can find a lot of examples online on how to do $2x2$ and $3x3$ matrix inversions, mostly because they are the easiest to do. 
+
+How do you know that you properly inverted your matrix? You multiply the original matrix by the inverse matrix and you will get an *identity* matrix. 
+
+We have a nice figure in Figure \@ref(fig:hello), and also a table in Table \@ref(tab:iris).
+
+## PCA
+
+Principle Components Analysis is not my favorite dimension reduction technique, but it is valuable for modeling purposes (and is *the* introduction to dimension reduction as a whole).
+
+Let's see it in action and then pick it apart.
+
+We can start with some generic data:
+
+```{r}
+library(psych)
+```
+
+And then pass that data to `prcomp`:
+
+```{r}
+bfi_clean <- na.omit(bfi)
+
+head(bfi_clean)
+
+bfi_scale <- bfi_clean[, grepl("\\d", names(bfi_clean))]
+
+prcomp(bfi_scale, scale. = TRUE)
+```
+
+So...we didn't reduce our dimensions at all. The goal of PCA is to extract all of the variance out of the data and roll that into new variable -- the principal components. Where PCA becomes useful is in the amount of variance that each component represents. The first component will try to extract all of the total variance out of the data. Once it has all of the total variance between variables that it can find, it will move onto the the next chunk, until all of the variance is gone. Do we need 100% of the variance...unlikely. 
+
+```{r}
+summary(prcomp(bfi_scale, scale. = TRUE))
+```
+
+We can see how much variance those components account for. From PC1 through PC14, we've accounted for 80% of the variance in this data. 
+
+If we want to use those variables to tie back into our data, here is how we do it:
+
+```{r}
+pca_results <- prcomp(bfi_scale, scale. = TRUE)
+
+ggcorrplot::ggcorrplot(cor(pca_results$x))
+```
+
+The most important feature of these components is that they are **orthogonal** to each other: this means that they are not at all correlated with each other, thus removing any issues related to multicollinearity.
+
+Great, but how exactly did that happen? With *eigenvalues* and *eigenvectors*.
+
+Let's define a small matrix called *A*:
+
+```{r}
+Amatrix <- matrix(c(1, 3, 4, 5), 
+                  nrow = 2, 
+                  ncol = 2)
+
+Amatrix
+```
+
+An eigenvector is a special value that can perform a linear transformation to a matrix; an eigenvalue is the value that scales the eigenvector. You can conceptualize it by thinking that an eigenvector provides the direction to scale a matrix and the eigenvalue is the strength of the scale. We can find the eigenvalues and eigenvectors as follows:
+
+$$Av = \lambda v$$
+
+Where $v$ is the eigenvector and $\delta$ is the eigenvalue.
+
+We can shuffle this equation around as follows:
+
+$$Av - \lambda v = 0$$
+
+As this is, we cannot factor this down any more. Remember that *A* is a matrix and $\delta$ is a single value, so we really can't do much more. We can, however, make a substition with the identity matrix:
+
+$$Av - \lambda v = Av - \lambda I v$$
+
+<aside>
+An identity matrix is the same size as the original matrix, with 1's on the diagonal and 0's elsewhere.
+</aside>
+
+With that identity matrix in there, we can reduce this to:
+
+$$(A - \lambda I)v = 0$$
+
+To begin solving this more, we need to find the determinant (it finds the inverse of any matrix). The determinant for a 2x2 matrix is found as follows:
+
+```{r}
+matrix(c("a", "c", "b", "d"), nrow = 2, ncol = 2)
+```
+
+$$|A| = ad - bc$$
+
+So in our aMatrix, we would have:
+
+```{r}
+1*5 - 4*3
+
+det(Amatrix)
+```
+
+To solve $(A - \lambda I)$, we get the following:
+
+$$
+\begin{pmatrix}
+1 & 4 \\
+3 & 5
+\end{pmatrix} - \lambda
+\begin{pmatrix}
+1 & 0 \\
+0 & 1
+\end{pmatrix}
+$$
+
+Which goes to:
+
+$$
+\begin{pmatrix}
+1 & 4 \\
+3 & 5
+\end{pmatrix} - 
+\begin{pmatrix}
+\lambda & 0 \\
+0 & \lambda
+\end{pmatrix}
+$$
+
+And then:
+
+$$
+\begin{pmatrix}
+1 - \lambda & 4 \\
+3 & 5 - \lambda
+\end{pmatrix} 
+$$
+
+So to find the determinant of this matrix, we have:
+
+$$det(A − \lambda I) = (1 − \lambda)(5 − \lambda) − (4 * 3)$$
+
+And solving that equation will get us:
+
+$$−7 − 6 \lambda + \lambda^2$$
+
+To produce a quadratic equation:
+
+$$\lambda^2  - 6 \lambda − 7$$
+
+Which solves to -1 and 7: our eigenvalues!
+
+
+All that, just to do the following:
+
+```{r}
+eigen(Amatrix)
+```
+
+And those values are how variance gets partitioned in PCA. So if you ever encounter very high dimensionsal data, you can reduce those dimensions down to get a small feature set for your models. 
