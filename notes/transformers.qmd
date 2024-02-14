@@ -1,0 +1,24 @@
+---
+title: "Transformers"
+format: html
+---
+
+## Attention Is All You Need
+
+In this landmark paper, a team of researchers found that they could improve language translation by configuring a model to have a connected **encoder** and **decoder**. One of the most important aspects was that the team completely removed typical neural network configurations (e.g., recurrance and convolutions) and focused on **attention**. 
+
+In these models, the role of the **encoder** (or a stack of encoders) is to take a sequential input -- Sometimes, I feel like everybody is a sexy baby and I'm a monster on the hill. Too big to hang out, slowly lurching toward your favorite city. Pierced through the heart, but never killed -- and convert it into a **contextualized representation**. Within the encoder, the sequence goes through 2 distinct layers:
+
+- **Self-attention**: This layer is responsible for understanding the relationships between words in the sequence -- Are "sexy babies" being pierced through the heart or is the monster on the hill being pierced through the heart? Maybe it is even your favorite city being pierced through the heart? It does this by comparing each word to every other word in the sequence and then using the results to create a weighted representation of the sequence. Self-attention also creates 3 separate vectors: **Query**, **Key**, and **Value**. Each word gets a score from the product of the query and key vectors.
+
+- **Feed Forward Neural Network**: This layer is responsible for taking the weighted representation and transforming it into a new representation. This new representation then gets passed onto the next embedding layer and the process begins again.
+
+In the very first Encoder layer, the words get turned into **word embeddings**. First and foremost, these embeddings allow words to be expressed as numeric values; this is a critical step of the model. A defining feature of word embeddings is that they help to represent context similarities of words; you can imagine verbs with difference tense being more similar to each other (e.g., drink, drank, drinking) than completely different verbs (e.g., drank and jumped). You'll often see **word2vec** as a common word embedding method.
+
+Once the encoder process has finished, the representation is then passed to the **decoder**. The decoder also goes through a self-attention and feed forward layer, but there is an **Encoder-Decoder Attention** layer between them. The sole purpose of this layer is to help focus on only the relevant parts of a sentence. 
+
+An important mechanism for transformers is **multi-headed attention**. This is where the model is able to focus on different parts of the sequence at the same time. This is important because it allows the model to learn different relationships between words. It will make several Query/Key/Value matrices and those matrices get combined into a single matrix. 
+
+If you want a good way to visualize some of this, check out this <a href='https://colab.research.google.com/github/tensorflow/tensor2tensor/blob/master/tensor2tensor/notebooks/hello_t2t.ipynb#scrollTo=OJKU36QAfqOC'>Notebook</a>. 
+
+While a ton of matrix operations underpin all of this work, those are the broad concepts. Transformers have made text generation and classification better then ever. You wouldn't be able to use *G*enerative *P*re-trained *T*ransformers without these models. Just about any model with a *T* in the name is telling you how important transformer have become (Google's *B*idirectional *E*ncoder *R*epresentations from *T*ransformers, Facebook's *R*obustly *O*ptimized *BERT* Pretraining *A*pproach). While they don't give love to the "transformer" name, Meta released  *L*arge *La*nguage Model *M*eta *A*I
