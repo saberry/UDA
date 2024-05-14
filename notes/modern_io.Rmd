@@ -46,7 +46,7 @@ So structured...so incredibly structured. However, that structure does not mean 
 ```{r}
 library(jsonlite) # You will need to install this.
 
-congress_critters <- fromJSON("~/UDA/data/critters.json")
+congress_critters <- fromJSON("~/Documents/UDA/data/critters.json")
 
 dplyr::glimpse(congress_critters$objects)
 ```
@@ -54,7 +54,7 @@ dplyr::glimpse(congress_critters$objects)
 You could also use `read_json`, but the `fromJSON` function will try to give you a nicer return (which it usually does). Let's see how we might tackle something a bit rougher:
 
 ```{r}
-congress_hard <- read_json("~/UDA/data/critters.json")
+congress_hard <- read_json("~/Documents/UDA/data/critters.json")
 ```
 
 
@@ -74,7 +74,7 @@ import json # Already comes with python.
 import pandas as pd
 from datetime import date
 
-critters_json = json.load(open('/Users/sethberry/UDA/data/critters.json'))
+critters_json = json.load(open('/Users/sethberry/Documents/UDA/data/critters.json'))
 
 critters = pd.json_normalize(critters_json, record_path = ['objects'])
 
@@ -87,120 +87,63 @@ Just like R, pandas will offer different methods for reading json. If you don't 
 
 You've probably got the general idea. No matter the situation, you are going to need to put in some effort to get the data in the right shape.
 
-## R
-
-You've learned some base R and you've probably taken a liking to the tidyverse, but what if I told you that there is a third R dialect? What if I told you that this dialect was infinitely faster than either of those? If find yourself working in the R world, you will want to switch to data.table eventually. You might find yourself asking, "Why?", and that is a solid question. First, it is less prone to major changes than the tidyverse. Second, it will make you a better R users; it is more base-like in operation than the tidyverse.
-
-Let's see how some common tasks might look.
-
-<aside>
-The fread function from data.table is the fastest way to read data into memory.
-</aside>
-
-We can start by converting our data frame into a data table:
-
-```{r}
-library(data.table)
-
-congress_dt <- as.data.table(congress_critters$objects)
-```
-
-### select
-
-Won't shock you to know that it isn't much more complicated than base R:
-
-```{r}
-congress_dt[, .(party, person.sortname)] |>
-  head()
-```
-
-### filter
-
-Again, nothing wild:
-
-```{r}
-congress_dt[congress_dt$senator_rank == "junior", 
-            .(party, person.sortname)] |>
-  head()
-```
-
-### mutate
-
-Let's add an age variable in there:
-
-```{r}
-congress_dt[, 
-            age := as.numeric((Sys.Date() - as.Date(congress_dt$person.birthday)) / 365)]
-```
-
-### group by and summarize
-
-This is where we have the biggest shift -- the 3rd index position. Any data table object has an i, j, and k. Usually the k position is for `by` variables (or other special features).
-
-```{r}
-congress_dt[, 
-            .(mean_age = mean(age), .N, .GRP), 
-            by = list(senator_rank, person.gender)]
-```
-
-```{r}
-congress_dt[, 
-            lapply(.SD, mean), 
-            by = senator_rank, 
-            .SDcols = c("age")]
-```
-
-
-### Chained indices
-
-```{r}
-congress_dt[congress_dt$senator_rank == "junior", 
-][, 
-  .(mean_age = mean(age), .N), 
-  by = list(person.gender)
-]
-```
-
-### Using disk.frame
-
-Nothing beats the speed of data.table, but what if you want something faster?
-
-```{r}
-library(disk.frame)
-
-setup_disk.frame(3)
-
-congress_df <- as.disk.frame(congress_dt[, congress_numbers := NULL])
-
-congress_df[, 
-            .(mean_age = mean(age), .N, .GRP), 
-            by = list(senator_rank, person.gender)]
-```
-
-
 ## Python
 
 Like R, Python has undergone an evolution. If you want to work hard, everything could be done with numpy (I'd rather let all of you hit me in the kneecaps). People wanted/needed something a little easier, so pandas became popular. Talk to anybody about speed, though, and you will hear complaints about pandas being slow. Let's explore a few different packages: dask and polars
 
-### dask
+### pandas
 
-No doubt that pandas is popular; instead of reinventing the wheel people have decided to leverage pandas's API. What we see with `dask` is the ability to use pandas functions, but with greater speed.
+No doubt that pandas is popular; instead of reinventing the wheel people have decided to leverage pandas's API. With pandas 2.0, we saw big boosts with the arrow backend!
 
 ```{python}
-import dask
-import dask.dataframe as dd
-import json
 import pandas as pd
+import pyarrow as pa
+import re
+import timeit
 
-critters_json = json.load(open('/Users/sethberry/UDA/data/critters.json', encoding='utf-8'))
+billboard_songs_pa = pd.read_csv(
+  '/Users/sethberry/Documents/UDA/data/billboard_songs_11_23.csv', 
+  engine='pyarrow', dtype_backend='pyarrow'
+)
 
-critters = pd.json_normalize(critters_json, record_path = ['objects'])
+billboard_songs = pd.read_csv(
+  '/Users/sethberry/Documents/UDA/data/billboard_songs_11_23.csv', 
+)
 
-critters_dd = dd.from_pandas(critters, npartitions = 5)
+setup_normal = '''
+import pandas as pd
+billboard_songs = pd.read_csv(
+  '/Users/sethberry/Documents/UDA/data/billboard_songs_11_23.csv', 
+)
+'''
 
-critters_dd.groupby(['senator_rank']).agg({
-  'person.gender':'count'
-  }).compute()
+setup_pyarrow = '''
+import pandas as pd
+import pyarrow as pa
+billboard_songs = pd.read_csv(
+  '/Users/sethberry/Documents/UDA/data/billboard_songs_11_23.csv', 
+  engine='pyarrow', dtype_backend='pyarrow'
+)
+'''
+
+statement = '''
+billboard_songs['lyrics'].str.replace(
+  'and',
+  '&', 
+  regex=True
+)
+'''
+
+tests = {'setup_normal': setup_normal, 'setup_pyarrow': setup_pyarrow}
+
+for key, value in tests.items():
+  times = timeit.repeat(setup=value, 
+                        stmt=statement,
+                        repeat=2,
+                        number=10
+                        )
+  print('The lowest time for ' + key + ': ', min(times))
+  
 ```
 
 ### polars
@@ -208,36 +151,73 @@ critters_dd.groupby(['senator_rank']).agg({
 ```{python}
 import polars as pl
 
-critters.to_csv('/Users/sethberry/UDA/data/critters_pd.csv')
+billboard_songs = pl.read_csv(
+  '/Users/sethberry/Documents/UDA/data/billboard_songs_11_23.csv'
+)
 
-critters_pl = pl.read_csv('/Users/sethberry/UDA/data/critters_pd.csv')
+billboard_songs.schema
 
-critters_pl.select([
-  pl.col('senator_rank').filter(pl.col('person.gender') == 'female'),
-  ])
+billboard_songs['week'].head()
+
+billboard_songs = billboard_songs.with_columns(
+   pl.col("week").str.to_date("%Y-%m-%d", strict=False)
+)
+  
+billboard_songs['week'].head()  
+
+billboard_songs.group_by('genre').count()
+
+lazy_songs = billboard_songs.lazy()
+
+lazy_songs.group_by('genre').count().collect()
 ```
 
 
-## Porque no los dos
+### Who's Faster?
 
-A few really smart people have decided that R and Python are both useful and you probably want to pass information between them...queue the <a href="https://arrow.apache.org/docs/">Apache Arrow</a> project.
-
-We are going to see Arrow as a way to read and write data, but spend some time looking at the website -- you can do a lot with Arrow, no matter the language you use.
-
-```{r}
-library(arrow)
-
-write_feather(congress_brief, "/Users/sethberry/UDA/data/congress_feather.feather")
-```
-
-And now read that into Python:
+Let's time them out!
 
 ```{python}
-import pyarrow.feather as ft
+setup_normal = '''
 import pandas as pd
+billboard_songs = pd.read_csv(
+  '/Users/sethberry/Documents/UDA/data/billboard_songs_11_23.csv', 
+)
+'''
 
-ft.read_table("/Users/sethberry/UDA/data/congress_feather.feather")
+setup_pyarrow = '''
+import pandas as pd
+import pyarrow as pa
+billboard_songs = pd.read_csv(
+  '/Users/sethberry/Documents/UDA/data/billboard_songs_11_23.csv', 
+  engine='pyarrow', dtype_backend='pyarrow'
+)
+'''
 
-pd.read_feather("/Users/sethberry/UDA/data/congress_feather.feather")
+setup_polars = '''
+import polars as pl
+billboard_songs = pl.read_csv(
+  '/Users/sethberry/Documents/UDA/data/billboard_songs_11_23.csv'
+)
+'''
+
+# Works for polars, but is deprecated!
+statement = '''
+billboard_songs.groupby('genre').count()
+'''
+
+tests = {
+  'setup_normal': setup_normal, 
+  'setup_pyarrow': setup_pyarrow, 
+  'setup_polars': setup_polars
+}
+
+for key, value in tests.items():
+  times = timeit.repeat(setup=value, 
+                        stmt=statement,
+                        repeat=10,
+                        number=10
+                        )
+  print('The lowest time for ' + key + ': ', min(times))
+
 ```
-

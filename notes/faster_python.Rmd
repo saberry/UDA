@@ -1,0 +1,138 @@
+---
+title: "Modern I/O"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## pandas
+
+No doubt that pandas is popular; instead of reinventing the wheel people have decided to leverage pandas's API. With pandas 2.0, we saw big boosts with the arrow backend!
+
+```{python}
+import pandas as pd
+import pyarrow as pa
+import re
+import timeit
+
+billboard_songs_pa = pd.read_csv(
+  '/Users/sethberry/Documents/UDA/data/billboard_songs_11_23.csv', 
+  engine='pyarrow', dtype_backend='pyarrow'
+)
+
+billboard_songs = pd.read_csv(
+  '/Users/sethberry/Documents/UDA/data/billboard_songs_11_23.csv', 
+)
+
+setup_normal = '''
+import pandas as pd
+billboard_songs = pd.read_csv(
+  '/Users/sethberry/Documents/UDA/data/billboard_songs_11_23.csv', 
+)
+'''
+
+setup_pyarrow = '''
+import pandas as pd
+import pyarrow as pa
+billboard_songs = pd.read_csv(
+  '/Users/sethberry/Documents/UDA/data/billboard_songs_11_23.csv', 
+  engine='pyarrow', dtype_backend='pyarrow'
+)
+'''
+
+statement = '''
+billboard_songs['lyrics'].str.replace(
+  'and',
+  '&', 
+  regex=True
+)
+'''
+
+tests = {'setup_normal': setup_normal, 'setup_pyarrow': setup_pyarrow}
+
+for key, value in tests.items():
+  times = timeit.repeat(setup=value, 
+                        stmt=statement,
+                        repeat=2,
+                        number=10
+                        )
+  print('The lowest time for ' + key + ': ', min(times))
+  
+```
+
+## polars
+
+```{python}
+import polars as pl
+
+billboard_songs = pl.read_csv(
+  '/Users/sethberry/Documents/UDA/data/billboard_songs_11_23.csv'
+)
+
+billboard_songs.schema
+
+billboard_songs['week'].head()
+
+billboard_songs = billboard_songs.with_columns(
+   pl.col("week").str.to_date("%Y-%m-%d", strict=False)
+)
+  
+billboard_songs['week'].head()  
+
+billboard_songs.group_by('genre').count()
+
+lazy_songs = billboard_songs.lazy()
+
+lazy_songs.group_by('genre').count().collect()
+```
+
+
+## Who's Faster?
+
+Let's time them out!
+
+```{python}
+setup_normal = '''
+import pandas as pd
+billboard_songs = pd.read_csv(
+  '/Users/sethberry/Documents/UDA/data/billboard_songs_11_23.csv', 
+)
+'''
+
+setup_pyarrow = '''
+import pandas as pd
+import pyarrow as pa
+billboard_songs = pd.read_csv(
+  '/Users/sethberry/Documents/UDA/data/billboard_songs_11_23.csv', 
+  engine='pyarrow', dtype_backend='pyarrow'
+)
+'''
+
+setup_polars = '''
+import polars as pl
+billboard_songs = pl.read_csv(
+  '/Users/sethberry/Documents/UDA/data/billboard_songs_11_23.csv'
+)
+'''
+
+# Works for polars, but is deprecated!
+statement = '''
+billboard_songs.groupby('genre').count()
+'''
+
+tests = {
+  'setup_normal': setup_normal, 
+  'setup_pyarrow': setup_pyarrow, 
+  'setup_polars': setup_polars
+}
+
+for key, value in tests.items():
+  times = timeit.repeat(setup=value, 
+                        stmt=statement,
+                        repeat=10,
+                        number=10
+                        )
+  print('The lowest time for ' + key + ': ', min(times))
+
+```
