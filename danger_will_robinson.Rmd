@@ -1,0 +1,60 @@
+---
+title: "Scary Stuff"
+output: revealjs::revealjs_presentation
+---
+
+##
+
+December 17, 1903
+
+## {data-background="https://media.giphy.com/media/3o7btQNpsnVdsC4dOM/giphy.gif"}
+
+##
+
+July 28, 1914
+
+## {data-background="https://media.giphy.com/media/tB8Goqi7wsAxeNb8bM/giphy.gif"}
+
+##
+
+1959
+
+Widrow & Hoff develop "ADALINE" and "MADALINE"
+
+##
+
+1982
+
+US-Japan conference on Cooperative/Competitive Neural Networks
+
+## {data-background="https://media.giphy.com/media/YknAouVrcbkiDvWUOR/giphy.gif"}
+
+##
+
+July 3, 1991
+
+## {data-background="https://media.giphy.com/media/h4Hz4w9Jgrc1EY9VkL/giphy.gif"}
+
+
+
+## {data-background="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZTdkNDMyYjk0ZjI1NjA2MzVlNjVjYWExMmJkYTJkNGFkMjllMTgxYSZjdD1n/xGPy9LFlMi5X1Iarfh/giphy-downsized-large.gif"}
+
+##
+
+June 23, 2016
+
+## {data-background="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExODNlNjZjMjEyMWYyM2I5NjVkYTQ3NmY0MGVmZWE1NzE5ODliYTlmZCZjdD1n/3xz2BJdx02IvIKwcMg/giphy.gif"}
+
+##
+
+Everyday
+
+## {data-background="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMTQ4YzdkZGQzOGM4OWM4NDEzZmFmM2ViZmYzNDAwZmY5OWY1MGI1NyZjdD1n/3o6EhICK0ecIBMTuk8/giphy.gif"}
+
+## {data-background="https://media.giphy.com/media/0d4fyDf1uN1SkJiP0d/giphy.gif"}
+
+## {data-background="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYmFjNzQzMmFhYzJjMDIxNDgzNDg3MGQ3ZDc1ZTcyZmE1NDBlMjZmYiZjdD1n/pG9kMKdbJfQttjTkpb/giphy.gif"}
+
+## {data-background="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMzJhODg5NzNiMDlhYzc4OWMyNDYwNDZjOWJiYmI3M2M4ZGVjNzgyYSZjdD1n/11XlTjEq11SaS94Uyu/giphy.gif"}
+
+## {data-background="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZGEwZTUzNDVhMWQzN2M2MTAwN2RmZTU3OGI3ZDdlMGY0M2ViMDhiNyZjdD1n/CEdVDTtkvSelO/giphy.gif"}

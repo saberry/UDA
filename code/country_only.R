@@ -309,3 +309,12 @@ all_lyrics$artist <- artist_cleaner(all_lyrics$artist)
 
 save(all_lyrics, 
      file = "data/country_only_70_24.RData")
+
+arrow::write_feather(all_lyrics, "data/country_only_70_24.feather")
+
+
+all_lyrics$lyrics <- gsub("^.*lyrics\\s|\\sembed$", "", all_lyrics$lyrics)
+
+all_lyrics$lyrics <- gsub("\\syou might also like$", "", all_lyrics$lyrics)
+
+arrow::write_feather(all_lyrics, "data/country_only_70_24.feather")

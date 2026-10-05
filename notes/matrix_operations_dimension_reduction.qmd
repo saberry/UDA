@@ -39,8 +39,6 @@ vector_example = range(0, 5)
 
 Now, we can take a few of our block vectors and assemble them into a *matrix*. A matrix is a 2 dimensional collection of vectors. 
 
-\@ref(fig:matrix_blocks)
-
 $$
 \begin{bmatrix}
 1 & 2 & 3\\
@@ -280,7 +278,7 @@ matrix_A - matrix_B
 
 ## Transpose
 
-As you progress through this book, you might see a matrix denoted as $A^T$; here the superscripted T stands for *transpose*. If we transpose a matrix, all we are doing is flipping the rows and columns along the matrix's main diagonal. A visual example is much easier:
+You'll often see a matrix denoted as $A^T$; here the superscripted T stands for *transpose*. If we transpose a matrix, all we are doing is flipping the rows and columns along the matrix's main diagonal. A visual example is much easier:
 
 $$
 \stackrel{\mbox{Matrix A}}{

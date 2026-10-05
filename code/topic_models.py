@@ -12,7 +12,7 @@ import nltk
 nltk.download('vader_lexicon')
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
-songs = pd.read_feather("~/courses/unstructured/data/allLyricsDF.feather")
+songs = pd.read_feather("~/Downloads/allLyricsDF.feather")
 
 sid = SentimentIntensityAnalyzer()
 

@@ -118,7 +118,7 @@ We get something that starts to make sense. Now, let's try these on some actual 
 ```{r}
 # This data is in the "data" folder on Sakai!
 
-load("C:/Users/sberry5/Documents/teaching/UDA/data/all_lyrics_23_24.RData")
+load("~/Documents/UDA/data/all_lyrics_23_24.RData")
 
 sampleLyrics <- all_lyrics_info[11583, ]
 

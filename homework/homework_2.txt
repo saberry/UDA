@@ -1,0 +1,17 @@
+###################
+### Homework #2 ###
+###################
+
+## Task 1 ##
+
+This link -- https://bioguide.congress.gov/search -- contains information about every person who has ever served in the United States Congress. Your goal is to the download whatever you want; you could only go with the most current Congress, choose a few years, or go all the way back in time and get everyone. The choice is yours, but you have to provide the reason for your choice. You don't need to scrape anything; you can use the download button on the page! While you have some options, you must download the json files (no reason to take the easy way and get a csv). The main information that you want out of each person's page is their "profileText" and you need to choose at least one other piece of information to bring in with the profile. If you use R, you are going to want to make use of the list.files function (be sure to look at the arguments); Python users will likely use os.listdir. No matter which language you choose, you will probably need to use some type of error handling when reading the files.
+
+## Task 2 ## 
+
+Now that you have your text data, you need to do some exploration, clean up the text, and then create a document-term matrix. You don't need to do any analyses yet, but really think through your cleaning process. Every choice you make will have a consequence later. Save your tf-idf object.
+
+## Task 3 ##
+
+We are going to return to the Population Centers page: https://www.census.gov/geographies/reference-files/time-series/geo/centers-population.html
+
+Now, your task is to get every link for "Centers of Population by County" and plot each county's population center, just for 2020. You *cannot* use the link for the entire US. The task isn't much different than you did in homework 1, but pay attention to the format of those links. 

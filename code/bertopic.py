@@ -1,10 +1,14 @@
 from bertopic import BERTopic
 from bertopic.vectorizers import ClassTfidfTransformer
+import matplotlib.pyplot as plt
 import pandas as pd
+import os
+
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 ## Vanilla ##
 
-songs = pd.read_feather("C:/Users/sberry5/Documents/teaching/UDA/data/all_lyrics.feather")
+songs = pd.read_feather("~/Documents/UDA/data/all_lyrics.feather")
 
 songs = songs.dropna()
 

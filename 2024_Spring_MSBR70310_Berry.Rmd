@@ -1,0 +1,145 @@
+---
+title: |  
+      | Unstructured Data Analytics
+      | MSBR70310
+header-includes:
+   - \usepackage{hyperref}
+   - \hypersetup{
+    colorlinks=true,
+    linkcolor=magenta,
+    filecolor=magenta,      
+    urlcolor=magenta}
+output:
+    pdf_document
+fontsize: 12pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Office: 337 Mendoza
+
+# Email: seth.berry@nd.edu
+
+# Office Hours
+
+M -- 10:00 to 2:00
+
+W -- 10:00 to 2:00
+
+We can also always find mutual times that will work.
+
+# Class Days and Time
+
+Section 1: TR, 10:00 to 11:50
+
+Section 2: TR, 1:00 to 2:50
+
+Location -- Stayer B003
+
+# Course Description
+
+Huge amounts of the world’s data is unstructured (or difficult to process). Developing competency in how to harness this type of data in order to develop critical insights has significant value for today’s business. This course introduces the fundamental concepts of unstructured data analytics, from data acquisition and preparation to applying supervised and unsupervised machine learning approaches such as text analysis, dimension reduction, object recognition/detection, and recommender systems. In the context of unstructured data analytics, students will also be introduced to the principles of deep neural network and transformers.
+
+# Learning Goals
+
+By successfully completing this course, you will fulfill the following objectives:
+
+- Gain a foundational understanding of both supervised and unsupervised machine learning approaches to unstructured data.
+
+- Develop an applied knowledge of some of the common unstructured data acquisition, exploration, and preparation approaches using R and Python.
+
+- Understand the theoretical concepts behind text analysis, deep neural networks, and recommender systems.
+
+- Develop an applied knowledge of how to implement the approaches discussed in the course using R and Python.
+  
+# Readings
+
+There is no official textbook for this course, but here are some good resources:
+
+\href{https://www.tidytextmining.com/}{Text Mining with R}
+
+\href{https://r4ds.had.co.nz/}{R for Data Science}
+
+\href{https://swcarpentry.github.io/r-novice-inflammation/02-func-R/}{Creating Functions}
+
+Additional resources will be linked within course notes and on Canvas.
+
+# Homework
+
+During the course of the mod, we will have 4 homework assignments (worth 40, 50, 50, and 60 points). All homework assignments must be submitted in a compiled file (knitted from R Markdown or a Python-flavored notebook of your preference) -- no other file types will be accepted and reminders won't be given. Homework is to be completed on your own. If you use any coding assistance, you need to acknowledge its use. While you are welcome to think through problems together, all code and words should be your own. If similar work is submitted, those similar documents will both receive 0's. Homework is due within 8 days of it being assigned. Only one submission is allowed, so turn in your final work when it is ready. 
+
+# Presentations
+
+As opposed to a final exam, we will be having presentations on our last day of class. These are to be completed individually and presentations will have a 3 minute time limit. The goal is to answer a question or solve a problem. Presentation guidelines will follow, but general creativity and appropriate technique use will figure heavily into your grade. The biggest rule is that you cannot use data that you've found in an already tabular or structured format.
+
+# Professionalism
+
+Professionalism is an important part of preparing to exercise your skills as an analyst. At its core, professionalism about doing the right thing: being to class on time, being attentive and respectful during class, and communicating. These are points to lose.  
+
+# Grade Breakdown
+
+Professionalism -- 100 points (25%)
+
+Homework -- 200 points (50%)
+
+Presentation -- 100 points (25%)
+
+Total -- 400 points
+
+# Schedule
+
+```{r, echo = FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+
+data.frame(Date = c("01/16 (T)", 
+                    "01/18 (R)", 
+                    "01/23 (T)", 
+                    "01/25 (R)", 
+                    "01/30 (T)", 
+                    "02/01 (R)", 
+                    "02/06 (T)", 
+                    "02/08 (R)", 
+                    "02/13 (T)", 
+                    "02/15 (R)",
+                    "02/20 (T)",
+                    "02/22 (R)", 
+                    "02/27 (T)", 
+                    "TBD"), 
+           Topic = c("Faster Python and Pipelines",
+                     "Regular Expressions",
+                     "APIs", 
+                     "Scraping",
+                     "Text Processing", 
+                     "Sentiment Analysis",
+                     "Matrix Algebra and Dimension Reduction",
+                     "Topic Models",
+                     "Text Classification",
+                     "Object Classification",
+                     "Object Detection",
+                     "Audio",
+                     "Project Prep Day", 
+                     "Presentations"),
+           Method = c("", "", 
+                      "", "static and dynamic",
+                      "tf-idf", "word and sentence level sentiment",
+                      "PCA", "LDA and Transformers",
+                      "Deep Neural Networks", "Convolutional Neural Networks",
+                      "YOLO and friends", "Transcription",
+                      "", ""),
+           Homework = c("", 
+                        "", 
+                        "", 
+                        "",
+                        "#1 Assigned",
+                        "",
+                        "#2 Assigned \n #1 Due",
+                        "",
+                        "#3 Assigned \n #2 Due",
+                        "",
+                        "#4 Assigned \n #3 Due", 
+                        "", 
+                        "#4 Due", "")) %>%
+  flextable::flextable(cwidth = 1.5)
+```

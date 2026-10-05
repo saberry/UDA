@@ -39,7 +39,7 @@ matrix_1 <- matrix(c(2, 4, 6, 8,
 dim(matrix_1)
 ```
 
-These are objects we know. What we might not think about, though, is how these objects are being used by the modeling functions you use everday.
+These are objects we know. What we might not think about, though, is how these objects are being used by the modeling functions you use everyday.
 
 Obviously, you can add scalars together. What, though, can you do with everything else?
 
@@ -59,18 +59,21 @@ We can multiply a matrix by itself:
 
 ```{r}
 matrix_1 * matrix_1
-
 ```
 
 But we cannot perform a matrix multiplication on this. What is the differences between normal multiplication and matrix multiplication? 
 
 ```{r}
-t(matrix_1) %*% matrix_1
+transpose_1 <- t(matrix_1)
+
+dim(transpose_1)
+
+transpose_1 %*% matrix_1
 ```
 
-The only reason this works is because our dimensions are *conformable*. The original matrix is 4 by 2 and the transpose matrix is 2 by 4. As long as those <s>outside</s> inside dimensions match -- 2 and 2 -- we can use those objects for multiplication and addition. You will notice that these two matrices yielded a 2 by 2 matrix. Whatever our outside numbers are will provide the dimensions for the final matrix!
+The only reason this works is because our dimensions are *conformable*. The original matrix (matrix_1) is 4 by 2 and the transpose matrix is 2 by 4. As long as those inside dimensions match -- 2 and 2 -- we can use those objects for multiplication. You will notice that these two matrices yielded a 2 by 2 matrix. The final matrix will take the dimensions of the number of rows in the first matrix X by the number of columns in the second matrix (those are the outside dimensions). 
 
-Whether you knew it or not, ever stat/ML method is full of matrix algebra (and optimization).
+Whether you knew it or not, every stat/ML method is full of matrix algebra (and optimization).
 
 Let's see something that you already know:
 
@@ -111,11 +114,11 @@ multiplyY <- transposeX %*% y
 multiplyY
 ```
 
-Remember that our matrices need to be conformable, so we have a 3 X 1 matrix for multiplyY.
-
 Finally, we can take our solveX and multiply it by the multiplyY matrix:
 
 ```{r}
+dim(solveX)
+dim(multiplyY)
 solveX %*% multiplyY
 ```
 
@@ -279,7 +282,7 @@ And those values are how variance gets partitioned in PCA.
 
 # Naive Bayes
 
-With any exercise in statistical learning, the *Naive Bayesian* model is a great place to start. Why? Mostly because it tends to perform pretty well without too much hassle (i.e., tuning and various parameter tweaking). This reasonable performance even comes with some pretty central assumptions violated -- the naive part of the method comes from an assumption that observations are always completely and totally independent with regard to outcome variable. Another handy feature of the Naive Bayes is that it can handle missing observations without any issue. It will also work on smaller training set or data with higher correlations among variables. Perhaps most importantly, it is blazing fast compared to more complex methods, with often similar performance. 
+With any exercise in statistical learning, the *Naive Bayesian* model is a great place to start. Why? Mostly because it tends to perform pretty well without too much hassle (i.e., tuning and various parameter tweaking). This reasonable performance even comes with some pretty central assumptions violated -- the naive part of the method comes from an assumption that observations are always completely and totally independent with regard to outcome variable. Another handy feature of the Naive Bayes is that it can handle missing observations without any issue. It will also work on smaller training set or data with higher correlations among variables. Perhaps most importantly, it is blazing fast compared to more complex methods, with sometimes similar performance. 
 
 With all of this together, it becomes a really solid baseline for problems -- if another technique cannot beat a Naive Bayes on a problem, then it is probably not going to be worth using for that problem. The Naive Bayes has been used with great effect from everything to spam detection to determining the probability of a specific class of customers canceling a service (e.g., what is the probability that a 50 year-old, with a limited data plan, using a flip phone, would cancel his cell service). 
 
@@ -402,7 +405,7 @@ library(dplyr)
 library(stringr)
 library(tm)
 
-load("D:/projects/UDA/data/all_lyrics.RData")
+load("~/Documents/UDA/data/all_lyrics.RData")
 
 model_data <- all_lyrics_info[duplicated(all_lyrics_info$lyric_link) == FALSE, 
                               c("lyrics", "genre")] |>
@@ -436,9 +439,15 @@ dtm_df <- as.data.frame(as.matrix(song_dtm))
 
 dtm_df$genre <- as.factor(model_data$genre)
 
-colnames(dtm_df) <- make.names(names(dtm_df))
+colnames(dtm_df) <- make.names(names(dtm_df), unique = TRUE)
 
 dtm_df <- dtm_df[, which(duplicated(colnames(dtm_df)) == FALSE)]
+
+Encoding(colnames(dtm_df)) <- "latin1"
+
+colnames(dtm_df) <- iconv(colnames(dtm_df), "ASCII")
+
+colnames(dtm_df) <- make.names(names(dtm_df), unique = TRUE)
 ```
 
 Now, let's try something fun:
@@ -506,7 +515,7 @@ from sklearn import metrics
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-lyrics_pd = pd.read_feather('D:/projects/UDA/data/all_lyrics.feather')
+lyrics_pd = pd.read_feather('~/Documents/UDA/data/all_lyrics.feather')
 
 # lyrics_pd = pd.read_feather('C:/Users/sberry5/Documents/teaching/UDA/data/all_lyrics.feather')
 
